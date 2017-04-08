@@ -15,7 +15,7 @@
  */
 namespace Cake\ORM\Association;
 
-use Cake\Collection\Collection;
+use Cake\Collection\CakeCollection;
 use Cake\Database\Expression\FieldInterface;
 use Cake\Database\Expression\QueryExpression;
 use Cake\Datasource\EntityInterface;
@@ -338,7 +338,7 @@ class HasMany extends Association
         $property = $this->getProperty();
 
         $conditions = [
-            'OR' => (new Collection($targetEntities))
+            'OR' => (new CakeCollection($targetEntities))
                 ->map(function ($entity) use ($targetPrimaryKey) {
                     return $entity->extract($targetPrimaryKey);
                 })
@@ -351,7 +351,7 @@ class HasMany extends Association
         if ($options['cleanProperty'] && $result !== null) {
             $sourceEntity->set(
                 $property,
-                (new Collection($sourceEntity->get($property)))
+                (new CakeCollection($sourceEntity->get($property)))
                 ->reject(
                     function ($assoc) use ($targetEntities) {
                         return in_array($assoc, $targetEntities);
@@ -438,7 +438,7 @@ class HasMany extends Association
     protected function _unlinkAssociated(array $properties, EntityInterface $entity, Table $target, array $remainingEntities = [], array $options = [])
     {
         $primaryKey = (array)$target->getPrimaryKey();
-        $exclusions = new Collection($remainingEntities);
+        $exclusions = new CakeCollection($remainingEntities);
         $exclusions = $exclusions->map(
             function ($ent) use ($primaryKey) {
                 return $ent->extract($primaryKey);

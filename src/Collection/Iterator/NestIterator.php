@@ -14,7 +14,7 @@
  */
 namespace Cake\Collection\Iterator;
 
-use Cake\Collection\Collection;
+use Cake\Collection\CakeCollection;
 use RecursiveIterator;
 use Traversable;
 
@@ -22,7 +22,7 @@ use Traversable;
  * A type of collection that is aware of nested items and exposes methods to
  * check or retrieve them
  */
-class NestIterator extends Collection implements RecursiveIterator
+class NestIterator extends CakeCollection implements RecursiveIterator
 {
 
     /**

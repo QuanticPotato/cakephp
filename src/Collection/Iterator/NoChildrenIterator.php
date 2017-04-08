@@ -14,7 +14,7 @@
  */
 namespace Cake\Collection\Iterator;
 
-use Cake\Collection\Collection;
+use Cake\Collection\CakeCollection;
 use RecursiveIterator;
 
 /**
@@ -22,7 +22,7 @@ use RecursiveIterator;
  * a RecursiveIterator but do not want children. This iterator will
  * always behave as having no nested items.
  */
-class NoChildrenIterator extends Collection implements RecursiveIterator
+class NoChildrenIterator extends CakeCollection implements RecursiveIterator
 {
 
     /**

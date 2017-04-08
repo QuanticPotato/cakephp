@@ -14,7 +14,7 @@
  */
 namespace Cake\Datasource;
 
-use Cake\Collection\Collection;
+use Cake\Collection\CakeCollection;
 use Cake\Utility\Inflector;
 use InvalidArgumentException;
 use Traversable;
@@ -841,7 +841,7 @@ trait EntityTrait
     {
         $diff = array_diff_key($this->_properties, $this->_errors);
 
-        return $this->_errors + (new Collection($diff))
+        return $this->_errors + (new CakeCollection($diff))
             ->filter(function ($value) {
                 return is_array($value) || $value instanceof EntityInterface;
             })

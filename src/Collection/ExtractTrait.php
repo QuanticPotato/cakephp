@@ -79,7 +79,7 @@ trait ExtractTrait
             if ($collectionTransform) {
                 $rest = implode('.', array_slice($path, $i));
 
-                return (new Collection($data))->extract($rest);
+                return (new CakeCollection($data))->extract($rest);
             }
 
             if (!isset($data[$column])) {

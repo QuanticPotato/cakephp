@@ -209,7 +209,7 @@ trait CollectionTrait
             $group[$callback($value)][] = $value;
         }
 
-        return new Collection($group);
+        return new CakeCollection($group);
     }
 
     /**
@@ -223,7 +223,7 @@ trait CollectionTrait
             $group[$callback($value)] = $value;
         }
 
-        return new Collection($group);
+        return new CakeCollection($group);
     }
 
     /**
@@ -241,7 +241,7 @@ trait CollectionTrait
             $mr->emit(count($values), $key);
         };
 
-        return new Collection(new MapReduce($this->unwrap(), $mapper, $reducer));
+        return new CakeCollection(new MapReduce($this->unwrap(), $mapper, $reducer));
     }
 
     /**
@@ -270,7 +270,7 @@ trait CollectionTrait
         $elements = $this->toArray();
         shuffle($elements);
 
-        return new Collection($elements);
+        return new CakeCollection($elements);
     }
 
     /**
@@ -278,7 +278,7 @@ trait CollectionTrait
      */
     public function sample($size = 10)
     {
-        return new Collection(new LimitIterator($this->shuffle(), 0, $size));
+        return new CakeCollection(new LimitIterator($this->shuffle(), 0, $size));
     }
 
     /**
@@ -286,7 +286,7 @@ trait CollectionTrait
      */
     public function take($size = 1, $from = 0)
     {
-        return new Collection(new LimitIterator($this->unwrap(), $from, $size));
+        return new CakeCollection(new LimitIterator($this->unwrap(), $from, $size));
     }
 
     /**
@@ -294,7 +294,7 @@ trait CollectionTrait
      */
     public function skip($howMany)
     {
-        return new Collection(new LimitIterator($this->unwrap(), $howMany));
+        return new CakeCollection(new LimitIterator($this->unwrap(), $howMany));
     }
 
     /**
@@ -349,9 +349,9 @@ trait CollectionTrait
     {
         $list = new AppendIterator();
         $list->append($this->unwrap());
-        $list->append((new Collection($items))->unwrap());
+        $list->append((new CakeCollection($items))->unwrap());
 
-        return new Collection($list);
+        return new CakeCollection($list);
     }
 
     /**
@@ -390,7 +390,7 @@ trait CollectionTrait
             $mapReduce->emit($result, $key);
         };
 
-        return new Collection(new MapReduce($this->unwrap(), $mapper, $reducer));
+        return new CakeCollection(new MapReduce($this->unwrap(), $mapper, $reducer));
     }
 
     /**
@@ -433,7 +433,7 @@ trait CollectionTrait
             $parents[$key][$nestingKey] = $children;
         };
 
-        return (new Collection(new MapReduce($this->unwrap(), $mapper, $reducer)))
+        return (new CakeCollection(new MapReduce($this->unwrap(), $mapper, $reducer)))
             ->map(function ($value) use (&$isObject) {
                 return $isObject ? $value : $value->getArrayCopy();
             });
@@ -490,7 +490,7 @@ trait CollectionTrait
      */
     public function compile($preserveKeys = true)
     {
-        return new Collection($this->toArray($preserveKeys));
+        return new CakeCollection($this->toArray($preserveKeys));
     }
 
     /**
@@ -548,7 +548,7 @@ trait CollectionTrait
             };
         }
 
-        return new Collection(
+        return new CakeCollection(
             new RecursiveIteratorIterator(
                 new UnfoldIterator($this, $transformer),
                 RecursiveIteratorIterator::LEAVES_ONLY
@@ -563,7 +563,7 @@ trait CollectionTrait
     {
         $result = $handler($this);
 
-        return $result instanceof CollectionInterface ? $result : new Collection($result);
+        return $result instanceof CollectionInterface ? $result : new CakeCollection($result);
     }
 
     /**
@@ -680,7 +680,7 @@ trait CollectionTrait
     public function cartesianProduct(callable $operation = null, callable $filter = null)
     {
         if ($this->isEmpty()) {
-            return new Collection([]);
+            return new CakeCollection([]);
         }
 
         $collectionArrays = [];
@@ -722,7 +722,7 @@ trait CollectionTrait
             }
         }
 
-        return new Collection($result);
+        return new CakeCollection($result);
     }
 
     /**
@@ -745,6 +745,6 @@ trait CollectionTrait
             $result[] = array_column($arrayValue, $column);
         }
 
-        return new Collection($result);
+        return new CakeCollection($result);
     }
 }

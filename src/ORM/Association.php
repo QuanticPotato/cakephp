@@ -14,7 +14,7 @@
  */
 namespace Cake\ORM;
 
-use Cake\Collection\Collection;
+use Cake\Collection\CakeCollection;
 use Cake\Core\App;
 use Cake\Core\ConventionsTrait;
 use Cake\Database\Expression\IdentifierExpression;
@@ -1184,7 +1184,7 @@ abstract class Association
                 }
                 $extracted[] = $result;
             }
-            $extracted = new Collection($extracted);
+            $extracted = new CakeCollection($extracted);
             foreach ($formatters as $callable) {
                 $extracted = new ResultSetDecorator($callable($extracted));
             }

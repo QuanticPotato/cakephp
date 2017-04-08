@@ -20,7 +20,7 @@ use Cake\Datasource\ConnectionInterface;
 /**
  * Extends the schema collection class to provide caching
  */
-class CachedCollection extends Collection
+class CachedCollection extends CakeCollection
 {
 
     /**

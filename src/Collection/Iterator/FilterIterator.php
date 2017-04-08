@@ -14,7 +14,7 @@
  */
 namespace Cake\Collection\Iterator;
 
-use Cake\Collection\Collection;
+use Cake\Collection\CakeCollection;
 use CallbackFilterIterator;
 use Iterator;
 
@@ -23,7 +23,7 @@ use Iterator;
  * passing a callback function to each of the elements and taking them out if
  * it does not return true.
  */
-class FilterIterator extends Collection
+class FilterIterator extends CakeCollection
 {
 
     /**

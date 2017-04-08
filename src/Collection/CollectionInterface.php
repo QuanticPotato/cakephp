@@ -33,7 +33,7 @@ interface CollectionInterface extends Iterator, JsonSerializable
      * ### Example:
      *
      * ```
-     * $collection = (new Collection($items))->each(function ($value, $key) {
+     * $collection = (new CakeCollection($items))->each(function ($value, $key) {
      *  echo "Element $key: $value";
      * });
      * ```
@@ -59,7 +59,7 @@ interface CollectionInterface extends Iterator, JsonSerializable
      * be present in the resulting collection:
      *
      * ```
-     * $collection = (new Collection([1, 2, 3]))->filter(function ($value, $key) {
+     * $collection = (new CakeCollection([1, 2, 3]))->filter(function ($value, $key) {
      *  return $value % 2 === 0;
      * });
      * ```
@@ -85,7 +85,7 @@ interface CollectionInterface extends Iterator, JsonSerializable
      * be present in the resulting collection:
      *
      * ```
-     * $collection = (new Collection([1, 2, 3]))->reject(function ($value, $key) {
+     * $collection = (new CakeCollection([1, 2, 3]))->reject(function ($value, $key) {
      *  return $value % 2 === 0;
      * });
      * ```
@@ -107,7 +107,7 @@ interface CollectionInterface extends Iterator, JsonSerializable
      * ### Example:
      *
      * ```
-     * $overTwentyOne = (new Collection([24, 45, 60, 15]))->every(function ($value, $key) {
+     * $overTwentyOne = (new CakeCollection([24, 45, 60, 15]))->every(function ($value, $key) {
      *  return $value > 21;
      * });
      * ```
@@ -131,7 +131,7 @@ interface CollectionInterface extends Iterator, JsonSerializable
      * ### Example:
      *
      * ```
-     * $hasYoungPeople = (new Collection([24, 45, 15]))->every(function ($value, $key) {
+     * $hasYoungPeople = (new CakeCollection([24, 45, 15]))->every(function ($value, $key) {
      *  return $value < 21;
      * });
      * ```
@@ -164,7 +164,7 @@ interface CollectionInterface extends Iterator, JsonSerializable
      * Getting a collection of booleans where true indicates if a person is female:
      *
      * ```
-     * $collection = (new Collection($people))->map(function ($person, $key) {
+     * $collection = (new CakeCollection($people))->map(function ($person, $key) {
      *  return $person->gender === 'female';
      * });
      * ```
@@ -208,7 +208,7 @@ interface CollectionInterface extends Iterator, JsonSerializable
      *  ['comment' => ['body' => 'cool', 'user' => ['name' => 'Mark']],
      *  ['comment' => ['body' => 'very cool', 'user' => ['name' => 'Renan']]
      * ];
-     * $extracted = (new Collection($items))->extract('comment.user.name');
+     * $extracted = (new CakeCollection($items))->extract('comment.user.name');
      *
      * // Result will look like this when converted to array
      * ['Mark', 'Renan']
@@ -221,7 +221,7 @@ interface CollectionInterface extends Iterator, JsonSerializable
      *      ['comment' => ['votes' => [['value' => 1], ['value' => 2], ['value' => 3]]],
      *      ['comment' => ['votes' => [['value' => 4]]
      * ];
-     * $extracted = (new Collection($items))->extract('comment.votes.{*}.value');
+     * $extracted = (new CakeCollection($items))->extract('comment.votes.{*}.value');
      *
      * // Result will contain
      * [1, 2, 3, 4]
@@ -341,10 +341,10 @@ interface CollectionInterface extends Iterator, JsonSerializable
      *  ['id' => 3, 'name' => 'baz', 'parent_id' => 10],
      * ];
      *
-     * $group = (new Collection($items))->groupBy('parent_id');
+     * $group = (new CakeCollection($items))->groupBy('parent_id');
      *
      * // Or
-     * $group = (new Collection($items))->groupBy(function ($e) {
+     * $group = (new CakeCollection($items))->groupBy(function ($e) {
      *  return $e['parent_id'];
      * });
      *
@@ -384,10 +384,10 @@ interface CollectionInterface extends Iterator, JsonSerializable
      *  ['id' => 3, 'name' => 'baz'],
      * ];
      *
-     * $indexed = (new Collection($items))->indexBy('id');
+     * $indexed = (new CakeCollection($items))->indexBy('id');
      *
      * // Or
-     * $indexed = (new Collection($items))->indexBy(function ($e) {
+     * $indexed = (new CakeCollection($items))->indexBy(function ($e) {
      *  return $e['id'];
      * });
      *
@@ -423,10 +423,10 @@ interface CollectionInterface extends Iterator, JsonSerializable
      *  ['id' => 3, 'name' => 'baz', 'parent_id' => 10],
      * ];
      *
-     * $group = (new Collection($items))->countBy('parent_id');
+     * $group = (new CakeCollection($items))->countBy('parent_id');
      *
      * // Or
-     * $group = (new Collection($items))->countBy(function ($e) {
+     * $group = (new CakeCollection($items))->countBy(function ($e) {
      *  return $e['parent_id'];
      * });
      *
@@ -455,11 +455,11 @@ interface CollectionInterface extends Iterator, JsonSerializable
      *  ['invoice' => ['total' => 200]
      * ];
      *
-     * $total = (new Collection($items))->sumOf('invoice.total');
+     * $total = (new CakeCollection($items))->sumOf('invoice.total');
      *
      * // Total: 300
      *
-     * $total = (new Collection([1, 2, 3]))->sumOf();
+     * $total = (new CakeCollection([1, 2, 3]))->sumOf();
      * // Total: 6
      * ```
      *
@@ -521,7 +521,7 @@ interface CollectionInterface extends Iterator, JsonSerializable
      *  ['comment' => ['body' => 'very cool', 'user' => ['name' => 'Renan']]
      * ];
      *
-     * $extracted = (new Collection($items))->match(['user.name' => 'Renan']);
+     * $extracted = (new CakeCollection($items))->match(['user.name' => 'Renan']);
      *
      * // Result will look like this when converted to array
      * [
@@ -585,7 +585,7 @@ interface CollectionInterface extends Iterator, JsonSerializable
      *  ['id' => 3, 'name' => 'baz', 'parent' => 'a'],
      * ];
      *
-     * $combined = (new Collection($items))->combine('id', 'name');
+     * $combined = (new CakeCollection($items))->combine('id', 'name');
      *
      * // Result will look like this when converted to array
      * [
@@ -594,7 +594,7 @@ interface CollectionInterface extends Iterator, JsonSerializable
      *  3 => 'baz',
      * ];
      *
-     * $combined = (new Collection($items))->combine('id', 'name', 'parent');
+     * $combined = (new CakeCollection($items))->combine('id', 'name', 'parent');
      *
      * // Result will look like this when converted to array
      * [
@@ -647,7 +647,7 @@ interface CollectionInterface extends Iterator, JsonSerializable
      *  ['comment' => ['body' => 'awesome', 'user' => ['name' => 'Renan']]
      * ];
      * $ages = [25, 28];
-     * $inserted = (new Collection($items))->insert('comment.user.age', $ages);
+     * $inserted = (new CakeCollection($items))->insert('comment.user.age', $ages);
      *
      * // Result will look like this when converted to array
      * [
@@ -764,7 +764,7 @@ interface CollectionInterface extends Iterator, JsonSerializable
      * ### Example:
      *
      * ```
-     * $collection = new Collection([
+     * $collection = new CakeCollection([
      *  ['id' => 1, 'children' => [['id' => 2, 'children' => [['id' => 3]]]]],
      *  ['id' => 4, 'children' => [['id' => 5]]]
      * ]);
@@ -792,7 +792,7 @@ interface CollectionInterface extends Iterator, JsonSerializable
      * Get an array of lines in a CSV file until the timestamp column is less than a date
      *
      * ```
-     * $lines = (new Collection($fileLines))->stopWhen(function ($value, $key) {
+     * $lines = (new CakeCollection($fileLines))->stopWhen(function ($value, $key) {
      *  return (new DateTime($value))->format('Y') < 2012;
      * })
      * ->toArray();
@@ -801,7 +801,7 @@ interface CollectionInterface extends Iterator, JsonSerializable
      * Get elements until the first unapproved message is found:
      *
      * ```
-     * $comments = (new Collection($comments))->stopWhen(['is_approved' => false]);
+     * $comments = (new CakeCollection($comments))->stopWhen(['is_approved' => false]);
      * ```
      *
      * @param callable $condition the method that will receive each of the elements and
@@ -830,14 +830,14 @@ interface CollectionInterface extends Iterator, JsonSerializable
      *
      * ```
      * $items [[1, 2, 3], [4, 5]];
-     * $unfold = (new Collection($items))->unfold(); // Returns [1, 2, 3, 4, 5]
+     * $unfold = (new CakeCollection($items))->unfold(); // Returns [1, 2, 3, 4, 5]
      * ```
      *
      * Using a transformer
      *
      * ```
      * $items [1, 2, 3];
-     * $allItems = (new Collection($items))->unfold(function ($page) {
+     * $allItems = (new CakeCollection($items))->unfold(function ($page) {
      *  return $service->fetchPage($page)->toArray();
      * });
      * ```
@@ -856,7 +856,7 @@ interface CollectionInterface extends Iterator, JsonSerializable
      *
      * ```
      * $items = [1, 2, 3];
-     * $decorated = (new Collection($items))->through(function ($collection) {
+     * $decorated = (new CakeCollection($items))->through(function ($collection) {
      *      return new MyCustomCollection($collection);
      * });
      * ```
@@ -874,7 +874,7 @@ interface CollectionInterface extends Iterator, JsonSerializable
      * ### Example:
      *
      * ```
-     * $collection = new Collection([1, 2]);
+     * $collection = new CakeCollection([1, 2]);
      * $collection->zip([3, 4], [5, 6])->toList(); // returns [[1, 3, 5], [2, 4, 6]]
      * ```
      *
@@ -892,7 +892,7 @@ interface CollectionInterface extends Iterator, JsonSerializable
      * ### Example:
      *
      * ```
-     * $collection = new Collection([1, 2]);
+     * $collection = new CakeCollection([1, 2]);
      * $zipped = $collection->zipWith([3, 4], [5, 6], function (...$args) {
      *   return array_sum($args);
      * });
@@ -912,7 +912,7 @@ interface CollectionInterface extends Iterator, JsonSerializable
      *
      * ```
      * $items [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
-     * $chunked = (new Collection($items))->chunk(3)->toList();
+     * $chunked = (new CakeCollection($items))->chunk(3)->toList();
      * // Returns [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11]]
      * ```
      *
@@ -929,7 +929,7 @@ interface CollectionInterface extends Iterator, JsonSerializable
      *
      * ```
      * $items ['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4, 'e' => 5, 'f' => 6];
-     * $chunked = (new Collection($items))->chunkWithKeys(3)->toList();
+     * $chunked = (new CakeCollection($items))->chunkWithKeys(3)->toList();
      * // Returns [['a' => 1, 'b' => 2, 'c' => 3], ['d' => 4, 'e' => 5, 'f' => 6]]
      * ```
      *
@@ -946,11 +946,11 @@ interface CollectionInterface extends Iterator, JsonSerializable
      *
      * ```
      * $items [1, 2, 3];
-     * (new Collection($items))->isEmpty(); // false
+     * (new CakeCollection($items))->isEmpty(); // false
      * ```
      *
      * ```
-     * (new Collection([]))->isEmpty(); // true
+     * (new CakeCollection([]))->isEmpty(); // true
      * ```
      *
      * @return bool
@@ -979,7 +979,7 @@ interface CollectionInterface extends Iterator, JsonSerializable
      *       ['Product C', '400', '300', '200'],
      * ]
      *
-     * $transpose = (new Collection($items))->transpose()->toList();
+     * $transpose = (new CakeCollection($items))->transpose()->toList();
      *
      * // Returns
      * // [

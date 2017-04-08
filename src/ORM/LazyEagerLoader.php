@@ -14,7 +14,7 @@
  */
 namespace Cake\ORM;
 
-use Cake\Collection\Collection;
+use Cake\Collection\CakeCollection;
 use Cake\Database\Expression\TupleComparison;
 use Cake\Datasource\EntityInterface;
 
@@ -49,7 +49,7 @@ class LazyEagerLoader
             $returnSingle = true;
         }
 
-        $entities = new Collection($entities);
+        $entities = new CakeCollection($entities);
         $query = $this->_getQuery($entities, $contain, $source);
         $associations = array_keys($query->contain());
 

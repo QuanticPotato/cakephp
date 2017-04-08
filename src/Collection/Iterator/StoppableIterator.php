@@ -14,7 +14,7 @@
  */
 namespace Cake\Collection\Iterator;
 
-use Cake\Collection\Collection;
+use Cake\Collection\CakeCollection;
 
 /**
  * Creates an iterator from another iterator that will verify a condition on each
@@ -24,7 +24,7 @@ use Cake\Collection\Collection;
  * @internal
  * @see \Cake\Collection\Collection::stopWhen()
  */
-class StoppableIterator extends Collection
+class StoppableIterator extends CakeCollection
 {
 
     /**

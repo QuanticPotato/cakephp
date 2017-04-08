@@ -14,7 +14,7 @@
  */
 namespace Cake\Collection\Iterator;
 
-use Cake\Collection\Collection;
+use Cake\Collection\CakeCollection;
 use DateTimeInterface;
 
 /**
@@ -37,7 +37,7 @@ use DateTimeInterface;
  *
  * This iterator does not preserve the keys passed in the original elements.
  */
-class SortIterator extends Collection
+class SortIterator extends CakeCollection
 {
 
     /**
@@ -60,7 +60,7 @@ class SortIterator extends Collection
     public function __construct($items, $callback, $dir = SORT_DESC, $type = SORT_NUMERIC)
     {
         if (is_array($items)) {
-            $items = new Collection($items);
+            $items = new CakeCollection($items);
         }
 
         $items = iterator_to_array($items, false);

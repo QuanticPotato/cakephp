@@ -14,7 +14,7 @@
  */
 namespace Cake\Collection\Iterator;
 
-use Cake\Collection\Collection;
+use Cake\Collection\CakeCollection;
 use Countable;
 use Serializable;
 use SplDoublyLinkedList;
@@ -23,7 +23,7 @@ use SplDoublyLinkedList;
  * Creates an iterator from another iterator that will keep the results of the inner
  * iterator in memory, so that results don't have to be re-calculated.
  */
-class BufferedIterator extends Collection implements Countable, Serializable
+class BufferedIterator extends CakeCollection implements Countable, Serializable
 {
 
     /**

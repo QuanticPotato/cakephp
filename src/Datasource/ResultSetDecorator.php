@@ -14,7 +14,7 @@
  */
 namespace Cake\Datasource;
 
-use Cake\Collection\Collection;
+use Cake\Collection\CakeCollection;
 use Countable;
 
 /**
@@ -23,7 +23,7 @@ use Countable;
  *
  * @return void
  */
-class ResultSetDecorator extends Collection implements ResultSetInterface
+class ResultSetDecorator extends CakeCollection implements ResultSetInterface
 {
 
     /**

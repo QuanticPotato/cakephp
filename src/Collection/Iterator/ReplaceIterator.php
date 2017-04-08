@@ -14,13 +14,13 @@
  */
 namespace Cake\Collection\Iterator;
 
-use Cake\Collection\Collection;
+use Cake\Collection\CakeCollection;
 
 /**
  * Creates an iterator from another iterator that will modify each of the values
  * by converting them using a callback function.
  */
-class ReplaceIterator extends Collection
+class ReplaceIterator extends CakeCollection
 {
 
     /**

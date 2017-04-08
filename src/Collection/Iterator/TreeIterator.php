@@ -64,13 +64,13 @@ class TreeIterator extends RecursiveIteratorIterator
      * ### Example
      *
      * ```
-     *  $printer = (new Collection($treeStructure))->listNested()->printer('name');
+     *  $printer = (new CakeCollection($treeStructure))->listNested()->printer('name');
      * ```
      *
      * Using a closure:
      *
      * ```
-     *  $printer = (new Collection($treeStructure))
+     *  $printer = (new CakeCollection($treeStructure))
      *      ->listNested()
      *      ->printer(function ($item, $key, $iterator) {
      *          return $item->name;

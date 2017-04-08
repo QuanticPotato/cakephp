@@ -15,7 +15,7 @@
 namespace Cake\ORM\Behavior;
 
 use ArrayObject;
-use Cake\Collection\Collection;
+use Cake\Collection\CakeCollection;
 use Cake\Datasource\EntityInterface;
 use Cake\Event\Event;
 use Cake\I18n\I18n;
@@ -568,7 +568,7 @@ class TranslateBehavior extends Behavior implements PropertyMarshalInterface
             if (empty($translations) && $row->get('_translations')) {
                 return $row;
             }
-            $grouped = new Collection($translations);
+            $grouped = new CakeCollection($translations);
 
             $result = [];
             foreach ($grouped->combine('field', 'content', 'locale') as $locale => $keys) {

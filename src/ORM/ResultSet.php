@@ -14,7 +14,7 @@
  */
 namespace Cake\ORM;
 
-use Cake\Collection\Collection;
+use Cake\Collection\CakeCollection;
 use Cake\Collection\CollectionTrait;
 use Cake\Database\Exception;
 use Cake\Database\Type;
@@ -380,12 +380,12 @@ class ResultSet implements ResultSetInterface
     protected function _calculateAssociationMap($query)
     {
         $map = $query->getEagerLoader()->associationsMap($this->_defaultTable);
-        $this->_matchingMap = (new Collection($map))
+        $this->_matchingMap = (new CakeCollection($map))
             ->match(['matching' => true])
             ->indexBy('alias')
             ->toArray();
 
-        $this->_containMap = (new Collection(array_reverse($map)))
+        $this->_containMap = (new CakeCollection(array_reverse($map)))
             ->match(['matching' => false])
             ->indexBy('nestKey')
             ->toArray();

@@ -14,7 +14,7 @@
  */
 namespace Cake\View\Form;
 
-use Cake\Collection\Collection;
+use Cake\Collection\CakeCollection;
 use Cake\Datasource\EntityInterface;
 use Cake\Http\ServerRequest;
 use Cake\ORM\TableRegistry;
@@ -305,7 +305,7 @@ class EntityContext implements ContextInterface
         $table = $this->_getTable($path, false);
         $primary = $table ? (array)$table->getPrimaryKey() : ['id'];
 
-        return (new Collection($values))->extract($primary[0])->toArray();
+        return (new CakeCollection($values))->extract($primary[0])->toArray();
     }
 
     /**

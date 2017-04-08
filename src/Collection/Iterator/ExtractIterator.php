@@ -14,13 +14,13 @@
  */
 namespace Cake\Collection\Iterator;
 
-use Cake\Collection\Collection;
+use Cake\Collection\CakeCollection;
 
 /**
  * Creates an iterator from another iterator that extract the requested column
  * or property based on a path
  */
-class ExtractIterator extends Collection
+class ExtractIterator extends CakeCollection
 {
 
     /**

@@ -12,18 +12,18 @@
  * @since         2.0.0
  * @license       http://www.opensource.org/licenses/mit-license.php MIT License
  */
-use Cake\Collection\Collection;
+use Cake\Collection\CakeCollection;
 
 if (!function_exists('collection')) {
     /**
-     * Returns a new Cake\Collection\Collection object wrapping the passed argument.
+     * Returns a new Cake\Collection\CakeCollection object wrapping the passed argument.
      *
      * @param \Traversable|array $items The items from which the collection will be built.
-     * @return \Cake\Collection\Collection
+     * @return \Cake\Collection\CakeCollection
      */
     function collection($items)
     {
-        return new Collection($items);
+        return new CakeCollection($items);
     }
 
 }

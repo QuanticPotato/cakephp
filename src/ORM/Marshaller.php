@@ -15,7 +15,7 @@
 namespace Cake\ORM;
 
 use ArrayObject;
-use Cake\Collection\Collection;
+use Cake\Collection\CakeCollection;
 use Cake\Database\Expression\TupleComparison;
 use Cake\Database\Type;
 use Cake\Datasource\EntityInterface;
@@ -630,7 +630,7 @@ class Marshaller
     {
         $primary = (array)$this->_table->getPrimaryKey();
 
-        $indexed = (new Collection($data))
+        $indexed = (new CakeCollection($data))
             ->groupBy(function ($el) use ($primary) {
                 $keys = [];
                 foreach ($primary as $key) {
@@ -662,7 +662,7 @@ class Marshaller
             unset($indexed[$key]);
         }
 
-        $maybeExistentQuery = (new Collection($indexed))
+        $maybeExistentQuery = (new CakeCollection($indexed))
             ->map(function ($data, $key) {
                 return explode(';', $key);
             })
@@ -685,7 +685,7 @@ class Marshaller
             }
         }
 
-        foreach ((new Collection($indexed))->append($new) as $value) {
+        foreach ((new CakeCollection($indexed))->append($new) as $value) {
             if (!is_array($value)) {
                 continue;
             }

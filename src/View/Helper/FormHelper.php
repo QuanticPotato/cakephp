@@ -14,7 +14,7 @@
  */
 namespace Cake\View\Helper;
 
-use Cake\Collection\Collection;
+use Cake\Collection\CakeCollection;
 use Cake\Core\Configure;
 use Cake\Core\Exception\Exception;
 use Cake\Datasource\EntityInterface;
@@ -271,7 +271,7 @@ class FormHelper extends Helper
     {
         $this->addContextProvider('orm', function ($request, $data) {
             if (is_array($data['entity']) || $data['entity'] instanceof Traversable) {
-                $pass = (new Collection($data['entity']))->first() !== null;
+                $pass = (new CakeCollection($data['entity']))->first() !== null;
                 if ($pass) {
                     return new EntityContext($request, $data);
                 }

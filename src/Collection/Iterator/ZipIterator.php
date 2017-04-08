@@ -14,7 +14,7 @@
  */
 namespace Cake\Collection\Iterator;
 
-use Cake\Collection\Collection;
+use Cake\Collection\CakeCollection;
 use Cake\Collection\CollectionInterface;
 use Cake\Collection\CollectionTrait;
 use MultipleIterator;
@@ -71,7 +71,7 @@ class ZipIterator extends MultipleIterator implements CollectionInterface, Seria
     public function __construct(array $sets, $callable = null)
     {
         $sets = array_map(function ($items) {
-            return (new Collection($items))->unwrap();
+            return (new CakeCollection($items))->unwrap();
         }, $sets);
 
         $this->_callback = $callable;
