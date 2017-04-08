@@ -24,7 +24,7 @@ use PDOException;
  * Used to access information about the tables,
  * and other data in a database.
  */
-class Collection
+class SchemaCollection
 {
 
     /**

@@ -23,7 +23,7 @@ use Cake\Database\Log\LoggedQuery;
 use Cake\Database\Log\LoggingStatement;
 use Cake\Database\Log\QueryLogger;
 use Cake\Database\Schema\CachedCollection;
-use Cake\Database\Schema\Collection as SchemaCollection;
+use Cake\Database\Schema\SchemaCollection;
 use Cake\Datasource\ConnectionInterface;
 
 /**
