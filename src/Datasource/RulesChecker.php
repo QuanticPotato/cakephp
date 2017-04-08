@@ -132,7 +132,7 @@ class RulesChecker
      * second argument.
      * @return $this
      */
-    public function add(callable $rule, $name = null, array $options = [])
+    public function add($rule, $name = null, array $options = [])
     {
         $this->_rules[] = $this->_addError($rule, $name, $options);
 
@@ -157,7 +157,7 @@ class RulesChecker
      * second argument.
      * @return $this
      */
-    public function addCreate(callable $rule, $name = null, array $options = [])
+    public function addCreate($rule, $name = null, array $options = [])
     {
         $this->_createRules[] = $this->_addError($rule, $name, $options);
 
