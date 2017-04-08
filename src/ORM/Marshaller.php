@@ -17,7 +17,7 @@ namespace Cake\ORM;
 use ArrayObject;
 use Cake\Collection\CakeCollection;
 use Cake\Database\Expression\TupleComparison;
-use Cake\Database\Type;
+use Cake\Database\DbType;
 use Cake\Datasource\EntityInterface;
 use Cake\Datasource\InvalidPropertyInterface;
 use RuntimeException;
@@ -72,7 +72,7 @@ class Marshaller
             $columnType = $schema->columnType($prop);
             if ($columnType) {
                 $map[$prop] = function ($value, $entity) use ($columnType) {
-                    return Type::build($columnType)->marshal($value);
+                    return DbType::build($columnType)->marshal($value);
                 };
             }
         }

@@ -15,7 +15,7 @@
 namespace Cake\Database\Schema;
 
 use Cake\Database\Exception;
-use Cake\Database\Type;
+use Cake\Database\DbType;
 use Cake\Datasource\ConnectionInterface;
 
 /**
@@ -428,8 +428,8 @@ class TableSchema
             return null;
         }
 
-        if (Type::map($type)) {
-            $type = Type::build($type)->getBaseType();
+        if (DbType::map($type)) {
+            $type = DbType::build($type)->getBaseType();
         }
 
         return $this->_columns[$column]['baseType'] = $type;

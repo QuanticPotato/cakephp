@@ -17,7 +17,7 @@ namespace Cake\Database\Type;
 use Cake\Core\Exception\Exception;
 use Cake\Database\Driver;
 use Cake\Database\Driver\Sqlserver;
-use Cake\Database\Type;
+use Cake\Database\DbType;
 use Cake\Database\TypeInterface;
 use PDO;
 
@@ -26,7 +26,7 @@ use PDO;
  *
  * Use to convert binary data between PHP and the database types.
  */
-class BinaryType extends Type implements TypeInterface
+class BinaryType extends DbType implements TypeInterface
 {
     /**
      * Identifier name for this type.

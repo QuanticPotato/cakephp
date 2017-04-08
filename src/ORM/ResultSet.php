@@ -17,7 +17,7 @@ namespace Cake\ORM;
 use Cake\Collection\CakeCollection;
 use Cake\Collection\CollectionTrait;
 use Cake\Database\Exception;
-use Cake\Database\Type;
+use Cake\Database\DbType;
 use Cake\Datasource\EntityInterface;
 use Cake\Datasource\ResultSetInterface;
 use SplFixedArray;
@@ -447,7 +447,7 @@ class ResultSet implements ResultSetInterface
     {
         $types = [];
         $schema = $table->getSchema();
-        $map = array_keys(Type::map() + ['string' => 1, 'text' => 1, 'boolean' => 1]);
+        $map = array_keys(DbType::map() + ['string' => 1, 'text' => 1, 'boolean' => 1]);
         $typeMap = array_combine(
             $map,
             array_map(['Cake\Database\Type', 'build'], $map)

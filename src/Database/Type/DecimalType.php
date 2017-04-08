@@ -15,7 +15,7 @@
 namespace Cake\Database\Type;
 
 use Cake\Database\Driver;
-use Cake\Database\Type;
+use Cake\Database\DbType;
 use Cake\Database\TypeInterface;
 use InvalidArgumentException;
 use PDO;
@@ -26,7 +26,7 @@ use RuntimeException;
  *
  * Use to convert decimal data between PHP and the database types.
  */
-class DecimalType extends Type implements TypeInterface
+class DecimalType extends DbType implements TypeInterface
 {
     /**
      * Identifier name for this type.

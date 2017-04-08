@@ -18,7 +18,7 @@ use ArrayObject;
 use BadMethodCallException;
 use Cake\Core\App;
 use Cake\Database\Schema\TableSchema;
-use Cake\Database\Type;
+use Cake\Database\DbType;
 use Cake\Datasource\ConnectionInterface;
 use Cake\Datasource\EntityInterface;
 use Cake\Datasource\Exception\InvalidPrimaryKeyException;
@@ -1924,7 +1924,7 @@ class Table implements RepositoryInterface, EventListenerInterface, EventDispatc
                 if (!isset($data[$key])) {
                     $id = $statement->lastInsertId($this->getTable(), $key);
                     $type = $schema->columnType($key);
-                    $entity->set($key, Type::build($type)->toPHP($id, $driver));
+                    $entity->set($key, DbType::build($type)->toPHP($id, $driver));
                     break;
                 }
             }
@@ -1950,7 +1950,7 @@ class Table implements RepositoryInterface, EventListenerInterface, EventDispatc
             return null;
         }
         $typeName = $this->getSchema()->columnType($primary[0]);
-        $type = Type::build($typeName);
+        $type = DbType::build($typeName);
 
         return $type->newId();
     }
