@@ -81,7 +81,6 @@ class ReadOnlyTestInstanceConfig
 
 /**
  * InstanceConfigTraitTest
- *
  */
 class InstanceConfigTraitTest extends TestCase
 {
@@ -169,7 +168,7 @@ class InstanceConfigTraitTest extends TestCase
         $this->assertSame(
             'zum',
             $this->object->config('some'),
-            'should return the overritten value'
+            'should return the overwritten value'
         );
         $this->assertSame(
             $this->object,
@@ -206,7 +205,7 @@ class InstanceConfigTraitTest extends TestCase
         $this->assertSame(
             'zum',
             $this->object->config('a.nested'),
-            'should return the overritten value'
+            'should return the overwritten value'
         );
 
         $this->assertSame(

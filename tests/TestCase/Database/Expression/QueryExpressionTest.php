@@ -14,7 +14,6 @@
  */
 namespace Cake\Test\TestCase\Database\Expression;
 
-use Cake\Database\Expression\CaseExpression;
 use Cake\Database\Expression\QueryExpression;
 use Cake\Database\ValueBinder;
 use Cake\TestSuite\TestCase;
@@ -111,5 +110,59 @@ class QueryExpressionTest extends TestCase
         $dupe->iterateParts(function ($part, $i) use ($originalParts) {
             $this->assertNotSame($originalParts[$i], $part);
         });
+    }
+
+    /**
+     * Tests the hasNestedExpression() function
+     *
+     * @return void
+     */
+    public function testHasNestedExpression()
+    {
+        $expr = new QueryExpression();
+        $this->assertFalse($expr->hasNestedExpression());
+
+        $expr->add(['a' => 'b']);
+        $this->assertTrue($expr->hasNestedExpression());
+
+        $expr = new QueryExpression();
+        $expr->add('a = b');
+        $this->assertFalse($expr->hasNestedExpression());
+
+        $expr->add(new QueryExpression('1 = 1'));
+        $this->assertTrue($expr->hasNestedExpression());
+    }
+
+    /**
+     * Returns the list of specific comparison methods
+     *
+     * @return void
+     */
+    public function methodsProvider()
+    {
+        return [
+            ['eq'], ['notEq'], ['gt'], ['lt'], ['gte'], ['lte'], ['like'],
+            ['notLike'], ['in'], ['notIn']
+        ];
+    }
+
+    /**
+     * Tests that the query expression uses the type map when the
+     * specific comparison functions are used.
+     *
+     * @dataProvider methodsProvider
+     * @return void
+     */
+    public function testTypeMapUsage($method)
+    {
+        $expr = new QueryExpression([], ['created' => 'date']);
+        $expr->{$method}('created', 'foo');
+
+        $binder = new ValueBinder();
+        $expr->sql($binder);
+        $bindings = $binder->bindings();
+        $type = current($bindings)['type'];
+
+        $this->assertEquals('date', $type);
     }
 }

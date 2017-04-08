@@ -14,14 +14,12 @@
  */
 namespace Cake\Test\TestCase\Core\Configure\Engine;
 
-use Cake\Core\App;
 use Cake\Core\Configure\Engine\PhpConfig;
 use Cake\Core\Plugin;
 use Cake\TestSuite\TestCase;
 
 /**
- * Class PhpConfigTest
- *
+ * PhpConfigTest
  */
 class PhpConfigTest extends TestCase
 {
@@ -142,7 +140,7 @@ class PhpConfigTest extends TestCase
     {
         $engine = new PhpConfig(TMP);
         $result = $engine->dump('test', $this->testData);
-        $this->assertTrue($result > 0);
+        $this->assertGreaterThan(0, $result);
         $expected = <<<PHP
 <?php
 return array (
@@ -170,7 +168,7 @@ PHP;
         $this->assertTextEquals($expected, $contents);
 
         $result = $engine->dump('test', $this->testData);
-        $this->assertTrue($result > 0);
+        $this->assertGreaterThan(0, $result);
 
         $contents = file_get_contents($file);
         $this->assertTextEquals($expected, $contents);

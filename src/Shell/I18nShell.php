@@ -1,7 +1,5 @@
 <?php
 /**
- * Internationalization Management Shell
- *
  * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
  * Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
  *
@@ -24,6 +22,7 @@ use DirectoryIterator;
 /**
  * Shell for I18N management.
  *
+ * @property \Cake\Shell\Task\ExtractTask $Extract
  */
 class I18nShell extends Shell
 {
@@ -34,6 +33,11 @@ class I18nShell extends Shell
      * @var array
      */
     public $tasks = ['Extract'];
+
+    /**
+     * @var string[]
+     */
+    protected $_paths;
 
     /**
      * Override main() for help message hook
@@ -62,6 +66,7 @@ class I18nShell extends Shell
                 break;
             case 'q':
                 $this->_stop();
+
                 return;
             default:
                 $this->out('You have made an invalid selection. Please choose a command to execute by entering E, I, H, or Q.');
@@ -74,15 +79,15 @@ class I18nShell extends Shell
      * Inits PO file from POT file.
      *
      * @param string|null $language Language code to use.
-     * @return int|null
+     * @return void
      */
     public function init($language = null)
     {
         if (!$language) {
-            $language = strtolower($this->in('Please specify language code, e.g. `en`, `eng`, `en_US` etc.'));
+            $language = $this->in('Please specify language code, e.g. `en`, `eng`, `en_US` etc.');
         }
         if (strlen($language) < 2) {
-            return $this->error('Invalid language code. Valid is `en`, `eng`, `en_US` etc.');
+            $this->abort('Invalid language code. Valid is `en`, `eng`, `en_US` etc.');
         }
 
         $this->_paths = [APP];
@@ -91,9 +96,9 @@ class I18nShell extends Shell
             $this->_paths = [Plugin::classPath($plugin)];
         }
 
-        $response = $this->in('What folder?', null, rtrim($this->_paths[0], DS) . DS . 'Locale');
-        $sourceFolder = rtrim($response, DS) . DS;
-        $targetFolder = $sourceFolder . $language . DS;
+        $response = $this->in('What folder?', null, rtrim($this->_paths[0], DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'Locale');
+        $sourceFolder = rtrim($response, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+        $targetFolder = $sourceFolder . $language . DIRECTORY_SEPARATOR;
         if (!is_dir($targetFolder)) {
             mkdir($targetFolder, 0775, true);
         }
@@ -142,7 +147,7 @@ class I18nShell extends Shell
             ]
         ];
 
-        $parser->description(
+        $parser->setDescription(
             'I18n Shell generates .pot files(s) with translations.'
         )->addSubcommand('extract', [
             'help' => 'Extract the po translations from your application',

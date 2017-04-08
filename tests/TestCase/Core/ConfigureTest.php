@@ -15,7 +15,6 @@
 namespace Cake\Test\TestCase\Core;
 
 use Cake\Cache\Cache;
-use Cake\Core\App;
 use Cake\Core\Configure;
 use Cake\Core\Configure\Engine\PhpConfig;
 use Cake\Core\Plugin;
@@ -23,7 +22,6 @@ use Cake\TestSuite\TestCase;
 
 /**
  * ConfigureTest
- *
  */
 class ConfigureTest extends TestCase
 {
@@ -66,6 +64,31 @@ class ConfigureTest extends TestCase
             unlink(TMP . 'cache/persistent/test.php');
         }
         Configure::drop('test');
+    }
+
+    /**
+     * testReadOrFail method
+     *
+     * @return void
+     */
+    public function testReadOrFail()
+    {
+        $expected = 'ok';
+        Configure::write('This.Key.Exists', $expected);
+        $result = Configure::readOrFail('This.Key.Exists');
+        $this->assertEquals($expected, $result);
+    }
+
+    /**
+     * testReadOrFail method
+     *
+     * @expectedException \RuntimeException
+     * @expectedExceptionMessage Expected configuration key "This.Key.Does.Not.exist" not found
+     * @return void
+     */
+    public function testReadOrFailThrowingException()
+    {
+        Configure::readOrFail('This.Key.Does.Not.exist');
     }
 
     /**
@@ -251,7 +274,7 @@ class ConfigureTest extends TestCase
      * @expectedException \RuntimeException
      * @return void
      */
-    public function testLoadExceptionOnNonExistantFile()
+    public function testLoadExceptionOnNonExistentFile()
     {
         Configure::config('test', new PhpConfig());
         Configure::load('non_existing_configuration_file', 'test');
@@ -492,7 +515,7 @@ class ConfigureTest extends TestCase
         Configure::config('test_Engine', new PhpConfig(TMP));
 
         $result = Configure::dump('config_test', 'test_Engine');
-        $this->assertTrue($result > 0);
+        $this->assertGreaterThan(0, $result);
         $result = file_get_contents(TMP . 'config_test.php');
         $this->assertContains('<?php', $result);
         $this->assertContains('return ', $result);
@@ -512,7 +535,7 @@ class ConfigureTest extends TestCase
         Configure::write('Error', ['test' => 'value']);
 
         $result = Configure::dump('config_test', 'test_Engine', ['Error']);
-        $this->assertTrue($result > 0);
+        $this->assertGreaterThan(0, $result);
         $result = file_get_contents(TMP . 'config_test.php');
         $this->assertContains('<?php', $result);
         $this->assertContains('return ', $result);

@@ -14,7 +14,6 @@
  */
 namespace Cake\Test\TestCase\Console;
 
-use Cake\Console\ConsoleErrorHandler;
 use Cake\Controller\Exception\MissingActionException;
 use Cake\Core\Exception\Exception;
 use Cake\Log\Log;
@@ -31,13 +30,18 @@ class ConsoleErrorHandlerTest extends TestCase
     /**
      * setup, create mocks
      *
-     * @return Mock object
+     * @return void
      */
     public function setUp()
     {
         parent::setUp();
-        $this->stderr = $this->getMock('Cake\Console\ConsoleOutput', [], [], '', false);
-        $this->Error = $this->getMock('Cake\Console\ConsoleErrorHandler', ['_stop'], [['stderr' => $this->stderr]]);
+        $this->stderr = $this->getMockBuilder('Cake\Console\ConsoleOutput')
+            ->disableOriginalConstructor()
+            ->getMock();
+        $this->Error = $this->getMockBuilder('Cake\Console\ConsoleErrorHandler')
+            ->setMethods(['_stop'])
+            ->setConstructorArgs([['stderr' => $this->stderr]])
+            ->getMock();
         Log::drop('stderr');
     }
 
@@ -124,10 +128,10 @@ class ConsoleErrorHandlerTest extends TestCase
      */
     public function testError404Exception()
     {
-        $exception = new NotFoundException('dont use me in cli.');
+        $exception = new NotFoundException('don\'t use me in cli.');
 
         $this->stderr->expects($this->once())->method('write')
-            ->with($this->stringContains('dont use me in cli.'));
+            ->with($this->stringContains('don\'t use me in cli.'));
 
         $this->Error->handleException($exception);
     }
@@ -139,10 +143,10 @@ class ConsoleErrorHandlerTest extends TestCase
      */
     public function testError500Exception()
     {
-        $exception = new InternalErrorException('dont use me in cli.');
+        $exception = new InternalErrorException('don\'t use me in cli.');
 
         $this->stderr->expects($this->once())->method('write')
-            ->with($this->stringContains('dont use me in cli.'));
+            ->with($this->stringContains('don\'t use me in cli.'));
 
         $this->Error->handleException($exception);
     }

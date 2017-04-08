@@ -60,6 +60,7 @@ class Sqlserver extends Driver
         $config = $this->_config;
         $config['flags'] += [
             PDO::ATTR_PERSISTENT => $config['persistent'],
+            PDO::ATTR_EMULATE_PREPARES => false,
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
         ];
 
@@ -81,6 +82,7 @@ class Sqlserver extends Driver
                 $connection->exec("SET {$key} {$value}");
             }
         }
+
         return true;
     }
 
@@ -105,10 +107,11 @@ class Sqlserver extends Driver
         $this->connect();
         $options = [PDO::ATTR_CURSOR => PDO::CURSOR_SCROLL];
         $isObject = $query instanceof Query;
-        if ($isObject && $query->bufferResults() === false) {
+        if ($isObject && $query->isBufferedResultsEnabled() === false) {
             $options = [];
         }
         $statement = $this->_connection->prepare($isObject ? $query->sql() : $query, $options);
+
         return new SqlserverStatement($statement, $this);
     }
 

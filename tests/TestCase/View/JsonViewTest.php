@@ -17,16 +17,13 @@
 namespace Cake\Test\TestCase\View;
 
 use Cake\Controller\Controller;
-use Cake\Core\App;
 use Cake\Core\Configure;
-use Cake\Network\Request;
-use Cake\Network\Response;
+use Cake\Http\Response;
+use Cake\Http\ServerRequest;
 use Cake\TestSuite\TestCase;
-use Cake\View\JsonView;
 
 /**
  * JsonViewTest
- *
  */
 class JsonViewTest extends TestCase
 {
@@ -42,7 +39,7 @@ class JsonViewTest extends TestCase
      *
      * Note: array($data, $serialize, expected)
      *
-     * @return void
+     * @return array
      */
     public static function renderWithoutViewProvider()
     {
@@ -206,25 +203,45 @@ class JsonViewTest extends TestCase
                 JSON_HEX_TAG | JSON_HEX_APOS,
                 json_encode('<tag> \'quote\' "double-quote" &', JSON_HEX_TAG | JSON_HEX_APOS)
             ],
+
+            // Test render of NAN
+            [
+                ['value' => NAN],
+                true,
+                null,
+                '{"value":0}'
+            ],
+
+            // Test render of INF
+            [
+                ['value' => INF],
+                true,
+                null,
+                '{"value":0}'
+            ],
         ];
     }
 
     /**
      * Test render with a valid string in _serialize.
      *
+     * @param array $data
+     * @param string|null $serialize
+     * @param int|bool|null $jsonOptions
+     * @param string $expected
      * @dataProvider renderWithoutViewProvider
      * @return void
      */
     public function testRenderWithoutView($data, $serialize, $jsonOptions, $expected)
     {
-        $Request = new Request();
+        $Request = new ServerRequest();
         $Response = new Response();
         $Controller = new Controller($Request, $Response);
 
         $Controller->set($data);
         $Controller->set('_serialize', $serialize);
         $Controller->set('_jsonOptions', $jsonOptions);
-        $Controller->viewClass = 'Json';
+        $Controller->viewBuilder()->setClassName('Json');
         $View = $Controller->createView();
         $output = $View->render(false);
 
@@ -238,7 +255,7 @@ class JsonViewTest extends TestCase
      */
     public function testRenderSerializeNoHelpers()
     {
-        $Request = new Request();
+        $Request = new ServerRequest();
         $Response = new Response();
         $Controller = new Controller($Request, $Response);
 
@@ -247,7 +264,7 @@ class JsonViewTest extends TestCase
             'tags' => ['cakephp', 'framework'],
             '_serialize' => 'tags'
         ]);
-        $Controller->viewClass = 'Json';
+        $Controller->viewBuilder()->setClassName('Json');
         $View = $Controller->createView();
         $View->render();
 
@@ -261,7 +278,7 @@ class JsonViewTest extends TestCase
      */
     public function testJsonpResponse()
     {
-        $Request = new Request();
+        $Request = new ServerRequest();
         $Response = new Response();
         $Controller = new Controller($Request, $Response);
 
@@ -271,7 +288,7 @@ class JsonViewTest extends TestCase
             '_serialize' => 'data',
             '_jsonp' => true
         ]);
-        $Controller->viewClass = 'Json';
+        $Controller->viewBuilder()->setClassName('Json');
         $View = $Controller->createView();
         $output = $View->render(false);
 
@@ -298,7 +315,7 @@ class JsonViewTest extends TestCase
      */
     public function testRenderWithView()
     {
-        $Request = new Request();
+        $Request = new ServerRequest();
         $Response = new Response();
         $Controller = new Controller($Request, $Response);
         $Controller->name = 'Posts';
@@ -313,7 +330,7 @@ class JsonViewTest extends TestCase
             ]
         ];
         $Controller->set('user', $data);
-        $Controller->viewClass = 'Json';
+        $Controller->viewBuilder()->setClassName('Json');
         $View = $Controller->createView();
         $View->viewPath = $Controller->name;
         $output = $View->render('index');

@@ -19,15 +19,14 @@ use Cake\Controller\Component\PaginatorComponent;
 use Cake\Controller\Controller;
 use Cake\Core\Configure;
 use Cake\Datasource\ConnectionManager;
+use Cake\Http\ServerRequest;
 use Cake\Network\Exception\NotFoundException;
-use Cake\Network\Request;
+use Cake\ORM\Entity;
 use Cake\ORM\TableRegistry;
 use Cake\TestSuite\TestCase;
-use Cake\Utility\Hash;
 
 /**
  * PaginatorTestController class
- *
  */
 class PaginatorTestController extends Controller
 {
@@ -68,13 +67,15 @@ class PaginatorComponentTest extends TestCase
 
         Configure::write('App.namespace', 'TestApp');
 
-        $this->request = new Request('controller_posts/index');
+        $this->request = new ServerRequest('controller_posts/index');
         $this->request->params['pass'] = [];
         $controller = new Controller($this->request);
         $registry = new ComponentRegistry($controller);
         $this->Paginator = new PaginatorComponent($registry, []);
 
-        $this->Post = $this->getMock('Cake\ORM\Table', [], [], '', false);
+        $this->Post = $this->getMockBuilder('Cake\ORM\Table')
+            ->disableOriginalConstructor()
+            ->getMock();
     }
 
     /**
@@ -143,6 +144,7 @@ class PaginatorComponentTest extends TestCase
                 'order' => ['PaginatorPosts.id' => 'ASC'],
                 'page' => 1,
                 'whitelist' => ['limit', 'sort', 'page', 'direction'],
+                'scope' => null,
             ]);
         $this->Paginator->paginate($table, $settings);
     }
@@ -226,6 +228,7 @@ class PaginatorComponentTest extends TestCase
                 'page' => 1,
                 'order' => ['PaginatorPosts.id' => 'DESC'],
                 'whitelist' => ['limit', 'sort', 'page', 'direction'],
+                'scope' => null,
             ]);
 
         $this->Paginator->paginate($table, $settings);
@@ -257,6 +260,7 @@ class PaginatorComponentTest extends TestCase
                 'page' => 1,
                 'order' => ['PaginatorPosts.id' => 'DESC'],
                 'whitelist' => ['limit', 'sort', 'page', 'direction'],
+                'scope' => null,
             ]);
 
         $this->Paginator->paginate($table, $settings);
@@ -287,6 +291,75 @@ class PaginatorComponentTest extends TestCase
 
         $result = $this->Paginator->mergeOptions('Posts', $settings);
         $expected = ['page' => 1, 'limit' => 10, 'maxLimit' => 50, 'whitelist' => ['limit', 'sort', 'page', 'direction']];
+        $this->assertEquals($expected, $result);
+    }
+
+    /**
+     * test mergeOptions with custom scope
+     *
+     * @return void
+     */
+    public function testMergeOptionsCustomScope()
+    {
+        $this->request->query = [
+            'page' => 10,
+            'limit' => 10,
+            'scope' => [
+                'page' => 2,
+                'limit' => 5,
+            ]
+        ];
+
+        $settings = [
+            'page' => 1,
+            'limit' => 20,
+            'maxLimit' => 100,
+            'finder' => 'myCustomFind',
+        ];
+        $result = $this->Paginator->mergeOptions('Post', $settings);
+        $expected = [
+            'page' => 10,
+            'limit' => 10,
+            'maxLimit' => 100,
+            'finder' => 'myCustomFind',
+            'whitelist' => ['limit', 'sort', 'page', 'direction'],
+        ];
+        $this->assertEquals($expected, $result);
+
+        $settings = [
+            'page' => 1,
+            'limit' => 20,
+            'maxLimit' => 100,
+            'finder' => 'myCustomFind',
+            'scope' => 'non-existent',
+        ];
+        $result = $this->Paginator->mergeOptions('Post', $settings);
+        $expected = [
+            'page' => 1,
+            'limit' => 20,
+            'maxLimit' => 100,
+            'finder' => 'myCustomFind',
+            'whitelist' => ['limit', 'sort', 'page', 'direction'],
+            'scope' => 'non-existent',
+        ];
+        $this->assertEquals($expected, $result);
+
+        $settings = [
+            'page' => 1,
+            'limit' => 20,
+            'maxLimit' => 100,
+            'finder' => 'myCustomFind',
+            'scope' => 'scope',
+        ];
+        $result = $this->Paginator->mergeOptions('Post', $settings);
+        $expected = [
+            'page' => 2,
+            'limit' => 5,
+            'maxLimit' => 100,
+            'finder' => 'myCustomFind',
+            'whitelist' => ['limit', 'sort', 'page', 'direction'],
+            'scope' => 'scope',
+        ];
         $this->assertEquals($expected, $result);
     }
 
@@ -406,8 +479,8 @@ class PaginatorComponentTest extends TestCase
         $result = $this->Paginator->mergeOptions('Post', $settings);
         $expected = [
             'page' => 1,
-            'limit' => 200,
-            'maxLimit' => 200,
+            'limit' => 100,
+            'maxLimit' => 100,
             'paramType' => 'named',
             'whitelist' => ['limit', 'sort', 'page', 'direction']
         ];
@@ -420,9 +493,57 @@ class PaginatorComponentTest extends TestCase
         $result = $this->Paginator->mergeOptions('Post', $settings);
         $expected = [
             'page' => 1,
-            'limit' => 20,
+            'limit' => 10,
             'maxLimit' => 10,
             'paramType' => 'named',
+            'whitelist' => ['limit', 'sort', 'page', 'direction']
+        ];
+        $this->assertEquals($expected, $result);
+    }
+
+    /**
+     * test getDefaults with limit > maxLimit in code.
+     *
+     * @return void
+     */
+    public function testGetDefaultMaxLimit()
+    {
+        $settings = [
+            'page' => 1,
+            'limit' => 2,
+            'maxLimit' => 10,
+            'order' => [
+                'Users.username' => 'asc'
+            ],
+        ];
+        $result = $this->Paginator->mergeOptions('Post', $settings);
+        $expected = [
+            'page' => 1,
+            'limit' => 2,
+            'maxLimit' => 10,
+            'order' => [
+                'Users.username' => 'asc'
+            ],
+            'whitelist' => ['limit', 'sort', 'page', 'direction']
+        ];
+        $this->assertEquals($expected, $result);
+
+        $settings = [
+            'page' => 1,
+            'limit' => 100,
+            'maxLimit' => 10,
+            'order' => [
+                'Users.username' => 'asc'
+            ],
+        ];
+        $result = $this->Paginator->mergeOptions('Post', $settings);
+        $expected = [
+            'page' => 1,
+            'limit' => 10,
+            'maxLimit' => 10,
+            'order' => [
+                'Users.username' => 'asc'
+            ],
             'whitelist' => ['limit', 'sort', 'page', 'direction']
         ];
         $this->assertEquals($expected, $result);
@@ -448,6 +569,7 @@ class PaginatorComponentTest extends TestCase
                 'page' => 1,
                 'order' => ['PaginatorPosts.id' => 'asc'],
                 'whitelist' => ['limit', 'sort', 'page', 'direction'],
+                'scope' => null,
             ]);
 
         $this->request->query = [
@@ -467,7 +589,7 @@ class PaginatorComponentTest extends TestCase
      */
     public function testValidateSortInvalidDirection()
     {
-        $model = $this->getMock('Cake\ORM\Table');
+        $model = $this->getMockBuilder('Cake\ORM\Table')->getMock();
         $model->expects($this->any())
             ->method('alias')
             ->will($this->returnValue('model'));
@@ -528,7 +650,7 @@ class PaginatorComponentTest extends TestCase
      */
     public function testValidateSortWhitelistFailure()
     {
-        $model = $this->getMock('Cake\ORM\Table');
+        $model = $this->getMockBuilder('Cake\ORM\Table')->getMock();
         $model->expects($this->any())
             ->method('alias')
             ->will($this->returnValue('model'));
@@ -551,7 +673,7 @@ class PaginatorComponentTest extends TestCase
      */
     public function testValidateSortWhitelistTrusted()
     {
-        $model = $this->getMock('Cake\ORM\Table');
+        $model = $this->getMockBuilder('Cake\ORM\Table')->getMock();
         $model->expects($this->any())
             ->method('alias')
             ->will($this->returnValue('model'));
@@ -581,7 +703,7 @@ class PaginatorComponentTest extends TestCase
      */
     public function testValidateSortWhitelistEmpty()
     {
-        $model = $this->getMock('Cake\ORM\Table');
+        $model = $this->getMockBuilder('Cake\ORM\Table')->getMock();
         $model->expects($this->any())
             ->method('alias')
             ->will($this->returnValue('model'));
@@ -609,7 +731,7 @@ class PaginatorComponentTest extends TestCase
      */
     public function testValidateSortWhitelistNotInSchema()
     {
-        $model = $this->getMock('Cake\ORM\Table');
+        $model = $this->getMockBuilder('Cake\ORM\Table')->getMock();
         $model->expects($this->any())
             ->method('alias')
             ->will($this->returnValue('model'));
@@ -638,7 +760,7 @@ class PaginatorComponentTest extends TestCase
      */
     public function testValidateSortWhitelistMultiple()
     {
-        $model = $this->getMock('Cake\ORM\Table');
+        $model = $this->getMockBuilder('Cake\ORM\Table')->getMock();
         $model->expects($this->any())
             ->method('alias')
             ->will($this->returnValue('model'));
@@ -669,7 +791,7 @@ class PaginatorComponentTest extends TestCase
      */
     public function testValidateSortMultiple()
     {
-        $model = $this->getMock('Cake\ORM\Table');
+        $model = $this->getMockBuilder('Cake\ORM\Table')->getMock();
         $model->expects($this->any())
             ->method('alias')
             ->will($this->returnValue('model'));
@@ -697,7 +819,7 @@ class PaginatorComponentTest extends TestCase
      */
     public function testValidateSortWithString()
     {
-        $model = $this->getMock('Cake\ORM\Table');
+        $model = $this->getMockBuilder('Cake\ORM\Table')->getMock();
         $model->expects($this->any())
             ->method('alias')
             ->will($this->returnValue('model'));
@@ -719,7 +841,7 @@ class PaginatorComponentTest extends TestCase
      */
     public function testValidateSortNoSort()
     {
-        $model = $this->getMock('Cake\ORM\Table');
+        $model = $this->getMockBuilder('Cake\ORM\Table')->getMock();
         $model->expects($this->any())
             ->method('alias')
             ->will($this->returnValue('model'));
@@ -741,7 +863,7 @@ class PaginatorComponentTest extends TestCase
      */
     public function testValidateSortInvalidAlias()
     {
-        $model = $this->getMock('Cake\ORM\Table');
+        $model = $this->getMockBuilder('Cake\ORM\Table')->getMock();
         $model->expects($this->any())
             ->method('alias')
             ->will($this->returnValue('model'));
@@ -753,26 +875,60 @@ class PaginatorComponentTest extends TestCase
     }
 
     /**
+     * @return array
+     */
+    public function checkLimitProvider()
+    {
+        return [
+            'out of bounds' => [
+                ['limit' => 1000000, 'maxLimit' => 100],
+                100,
+            ],
+            'limit is nan' => [
+                ['limit' => 'sheep!', 'maxLimit' => 100],
+                1,
+            ],
+            'negative limit' => [
+                ['limit' => '-1', 'maxLimit' => 100],
+                1,
+            ],
+            'unset limit' => [
+                ['limit' => null, 'maxLimit' => 100],
+                1,
+            ],
+            'limit = 0' => [
+                ['limit' => 0, 'maxLimit' => 100],
+                1,
+            ],
+            'limit = 0 v2' => [
+                ['limit' => 0, 'maxLimit' => 0],
+                1,
+            ],
+            'limit = null' => [
+                ['limit' => null, 'maxLimit' => 0],
+                1,
+            ],
+            'bad input, results in 1' => [
+                ['limit' => null, 'maxLimit' => null],
+                1,
+            ],
+            'bad input, results in 1 v2' => [
+                ['limit' => false, 'maxLimit' => false],
+                1,
+            ],
+        ];
+    }
+
+    /**
      * test that maxLimit is respected
      *
+     * @dataProvider checkLimitProvider
      * @return void
      */
-    public function testCheckLimit()
+    public function testCheckLimit($input, $expected)
     {
-        $result = $this->Paginator->checkLimit(['limit' => 1000000, 'maxLimit' => 100]);
-        $this->assertEquals(100, $result['limit']);
-
-        $result = $this->Paginator->checkLimit(['limit' => 'sheep!', 'maxLimit' => 100]);
-        $this->assertEquals(1, $result['limit']);
-
-        $result = $this->Paginator->checkLimit(['limit' => '-1', 'maxLimit' => 100]);
-        $this->assertEquals(1, $result['limit']);
-
-        $result = $this->Paginator->checkLimit(['limit' => null, 'maxLimit' => 100]);
-        $this->assertEquals(1, $result['limit']);
-
-        $result = $this->Paginator->checkLimit(['limit' => 0, 'maxLimit' => 100]);
-        $this->assertEquals(1, $result['limit']);
+        $result = $this->Paginator->checkLimit($input);
+        $this->assertSame($expected, $result['limit']);
     }
 
     /**
@@ -816,12 +972,13 @@ class PaginatorComponentTest extends TestCase
             foreach ($result as $record) {
                 $ids[] = $record->title;
             }
+
             return $ids;
         };
 
         $table = TableRegistry::get('PaginatorPosts');
         $data = ['author_id' => 3, 'title' => 'Fourth Post', 'body' => 'Article Body, unpublished', 'published' => 'N'];
-        $result = $table->save(new \Cake\ORM\Entity($data));
+        $result = $table->save(new Entity($data));
         $this->assertNotEmpty($result);
 
         $result = $this->Paginator->paginate($table);
@@ -876,7 +1033,7 @@ class PaginatorComponentTest extends TestCase
         $this->loadFixtures('Posts');
         $table = TableRegistry::get('PaginatorPosts');
         $data = ['author_id' => 3, 'title' => 'Fourth Article', 'body' => 'Article Body, unpublished', 'published' => 'N'];
-        $table->save(new \Cake\ORM\Entity($data));
+        $table->save(new Entity($data));
 
         $settings = [
             'finder' => 'list',
@@ -920,7 +1077,13 @@ class PaginatorComponentTest extends TestCase
             ->will($this->returnValue($query));
 
         $query->expects($this->once())->method('applyOptions')
-            ->with(['limit' => 2, 'page' => 1, 'order' => [], 'whitelist' => ['limit', 'sort', 'page', 'direction']]);
+            ->with([
+                'limit' => 2,
+                'page' => 1,
+                'order' => [],
+                'whitelist' => ['limit', 'sort', 'page', 'direction'],
+                'scope' => null,
+            ]);
         $this->Paginator->paginate($table, $settings);
     }
 
@@ -953,6 +1116,7 @@ class PaginatorComponentTest extends TestCase
                 'order' => ['PaginatorPosts.id' => 'ASC'],
                 'page' => 1,
                 'whitelist' => ['limit', 'sort', 'page', 'direction'],
+                'scope' => null,
             ]);
         $this->Paginator->paginate($query, $settings);
     }
@@ -964,6 +1128,8 @@ class PaginatorComponentTest extends TestCase
      */
     public function testPaginateQueryWithBindValue()
     {
+        $config = ConnectionManager::config('test');
+        $this->skipIf(strpos($config['driver'], 'Sqlserver') !== false, 'Test temporarily broken in SQLServer');
         $this->loadFixtures('Posts');
         $table = TableRegistry::get('PaginatorPosts');
         $query = $table->find()
@@ -1010,6 +1176,7 @@ class PaginatorComponentTest extends TestCase
                 'order' => ['PaginatorPosts.id' => 'ASC'],
                 'page' => 1,
                 'whitelist' => ['limit', 'sort', 'page', 'direction'],
+                'scope' => null,
             ]);
         $this->Paginator->paginate($query, $settings);
     }
@@ -1018,14 +1185,13 @@ class PaginatorComponentTest extends TestCase
      * Helper method for making mocks.
      *
      * @param array $methods
-     * @return Table
+     * @return \Cake\ORM\Table
      */
     protected function _getMockPosts($methods = [])
     {
-        return $this->getMock(
-            'TestApp\Model\Table\PaginatorPostsTable',
-            $methods,
-            [[
+        return $this->getMockBuilder('TestApp\Model\Table\PaginatorPostsTable')
+            ->setMethods($methods)
+            ->setConstructorArgs([[
                 'connection' => ConnectionManager::get('test'),
                 'alias' => 'PaginatorPosts',
                 'schema' => [
@@ -1036,14 +1202,14 @@ class PaginatorComponentTest extends TestCase
                     'published' => ['type' => 'string', 'length' => 1, 'default' => 'N'],
                     '_constraints' => ['primary' => ['type' => 'primary', 'columns' => ['id']]]
                 ]
-            ]]
-        );
+            ]])
+            ->getMock();
     }
 
     /**
      * Helper method for mocking queries.
      *
-     * @return Query
+     * @return \Cake\ORM\Query
      */
     protected function _getMockFindQuery($table = null)
     {
@@ -1052,7 +1218,9 @@ class PaginatorComponentTest extends TestCase
             ->disableOriginalConstructor()
             ->getMock();
 
-        $results = $this->getMock('Cake\ORM\ResultSet', [], [], '', false);
+        $results = $this->getMockBuilder('Cake\ORM\ResultSet')
+            ->disableOriginalConstructor()
+            ->getMock();
         $query->expects($this->any())
             ->method('count')
             ->will($this->returnValue(2));
@@ -1066,6 +1234,7 @@ class PaginatorComponentTest extends TestCase
             ->will($this->returnValue(2));
 
         $query->repository($table);
+
         return $query;
     }
 }

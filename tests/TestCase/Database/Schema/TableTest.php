@@ -22,7 +22,6 @@ use Cake\TestSuite\TestCase;
 
 /**
  * Mock class for testing baseType inheritance
- *
  */
 class FooType extends Type
 {
@@ -39,7 +38,13 @@ class FooType extends Type
 class TableTest extends TestCase
 {
 
-    public $fixtures = ['core.articles_tags', 'core.orders', 'core.products', 'core.tags'];
+    public $fixtures = [
+        'core.articles',
+        'core.tags',
+        'core.articles_tags',
+        'core.orders',
+        'core.products'
+    ];
 
     protected $_map;
 
@@ -97,6 +102,27 @@ class TableTest extends TestCase
         $result = $table->addColumn('body', 'text');
         $this->assertSame($table, $result);
         $this->assertEquals(['title', 'body'], $table->columns());
+    }
+
+    /**
+     * Test removing columns.
+     *
+     * @return void
+     */
+    public function testRemoveColumn()
+    {
+        $table = new Table('articles');
+        $result = $table->addColumn('title', [
+            'type' => 'string',
+            'length' => 25,
+            'null' => false
+        ])->removeColumn('title')
+        ->removeColumn('unknown');
+
+        $this->assertSame($table, $result);
+        $this->assertEquals([], $table->columns());
+        $this->assertNull($table->column('title'));
+        $this->assertSame([], $table->typeMap());
     }
 
     /**
@@ -211,6 +237,7 @@ class TableTest extends TestCase
             'null' => null,
             'fixed' => null,
             'comment' => null,
+            'collate' => null,
         ];
         $this->assertEquals($expected, $result);
 
@@ -298,11 +325,44 @@ class TableTest extends TestCase
     }
 
     /**
+     * Test adding an constraint with an overlapping unique index
+     * >
+     * @return void
+     */
+    public function testAddConstraintOverwriteUniqueIndex()
+    {
+        $table = new Table('articles');
+        $table->addColumn('project_id', [
+            'type' => 'integer',
+            'default' => null,
+            'limit' => 11,
+            'null' => false,
+        ])->addColumn('id', [
+            'type' => 'integer',
+            'autoIncrement' => true,
+            'limit' => 11
+        ])->addColumn('user_id', [
+            'type' => 'integer',
+            'default' => null,
+            'limit' => 11,
+            'null' => false,
+        ])->addConstraint('users_idx', [
+            'type' => 'unique',
+            'columns' => ['project_id', 'user_id']
+        ])->addConstraint('users_idx', [
+            'type' => 'foreign',
+            'references' => ['users', 'project_id', 'id'],
+            'columns' => ['project_id', 'user_id']
+        ]);
+        $this->assertEquals(['users_idx'], $table->constraints());
+    }
+
+    /**
      * Dataprovider for invalid addConstraint calls.
      *
      * @return array
      */
-    public static function addConstaintErrorProvider()
+    public static function addConstraintErrorProvider()
     {
         return [
             // No properties
@@ -321,7 +381,7 @@ class TableTest extends TestCase
      * Test that an exception is raised when constraints
      * are added for fields that do not exist.
      *
-     * @dataProvider addConstaintErrorProvider
+     * @dataProvider addConstraintErrorProvider
      * @expectedException \Cake\Database\Exception
      * @return void
      */
@@ -521,7 +581,6 @@ class TableTest extends TestCase
             'delete' => 'cascade',
             'length' => []
         ];
-
         $this->assertEquals($expected, $compositeConstraint);
 
         $expectedSubstring = 'CONSTRAINT <product_category_fk> FOREIGN KEY \(<product_category>, <product_id>\)' .

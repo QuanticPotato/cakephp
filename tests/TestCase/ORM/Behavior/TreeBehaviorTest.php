@@ -14,9 +14,6 @@
  */
 namespace Cake\Test\TestCase\ORM\Behavior;
 
-use Cake\Collection\Collection;
-use Cake\Event\Event;
-use Cake\ORM\Behavior\TranslateBehavior;
 use Cake\ORM\Entity;
 use Cake\ORM\TableRegistry;
 use Cake\TestSuite\TestCase;
@@ -230,7 +227,7 @@ class TreeBehaviorTest extends TestCase
         // leaf
         $nodeIds = [];
         $nodes = $table->find('children', ['for' => 5])->all();
-        $this->assertEquals(0, count($nodes->extract('id')->toArray()));
+        $this->assertCount(0, $nodes->extract('id')->toArray());
 
         // direct children
         $nodes = $table->find('children', ['for' => 1, 'direct' => true])->all();
@@ -259,7 +256,15 @@ class TreeBehaviorTest extends TestCase
     {
         $table = TableRegistry::get('MenuLinkTrees');
         $table->addBehavior('Tree', ['scope' => ['menu' => 'main-menu']]);
-        $result = $table->find('treeList')->toArray();
+        $query = $table->find('treeList');
+
+        $result = null;
+        $query->clause('order')->iterateParts(function ($dir, $field) use (&$result) {
+            $result = $field;
+        });
+        $this->assertEquals('MenuLinkTrees.lft', $result);
+
+        $result = $query->toArray();
         $expected = [
             1 => 'Link 1',
             2 => '_Link 2',
@@ -787,7 +792,7 @@ class TreeBehaviorTest extends TestCase
     }
 
     /**
-     * Tests that adding a child node as a decendant of one of the roots works
+     * Tests that adding a child node as a descendant of one of the roots works
      *
      * @return void
      */
@@ -850,6 +855,72 @@ class TreeBehaviorTest extends TestCase
             '23:24 - 11:alien hardware'
         ];
         $this->assertMpttValues($expected, $this->table);
+    }
+
+    /**
+     * Tests adding a root element to the tree when all other root elements have children
+     *
+     * @return void
+     */
+    public function testAddRoot()
+    {
+        $table = $this->table;
+
+        //First add a child to the empty root element
+        $alien = $table->find()->where(['name' => 'alien hardware'])->first();
+        $entity = new Entity(['name' => 'plasma rifle', 'parent_id' => $alien->id], ['markNew' => true]);
+        $table->save($entity);
+
+        $entity = new Entity(['name' => 'carpentry', 'parent_id' => null], ['markNew' => true]);
+        $this->assertSame($entity, $table->save($entity));
+        $this->assertEquals(25, $entity->lft);
+        $this->assertEquals(26, $entity->rght);
+
+        $expected = [
+            ' 1:20 -  1:electronics',
+            '_ 2: 9 -  2:televisions',
+            '__ 3: 4 -  3:tube',
+            '__ 5: 6 -  4:lcd',
+            '__ 7: 8 -  5:plasma',
+            '_10:19 -  6:portable',
+            '__11:14 -  7:mp3',
+            '___12:13 -  8:flash',
+            '__15:16 -  9:cd',
+            '__17:18 - 10:radios',
+            '21:24 - 11:alien hardware',
+            '_22:23 - 12:plasma rifle',
+            '25:26 - 13:carpentry',
+        ];
+        $this->assertMpttValues($expected, $this->table);
+    }
+
+    /**
+     * Tests making a node its own parent as an existing entity
+     *
+     * @expectedException \RuntimeException
+     * @expectedExceptionMessage Cannot set a node's parent as itself
+     * @return void
+     */
+    public function testReParentSelf()
+    {
+        $entity = $this->table->get(1);
+        $entity->parent_id = $entity->id;
+        $this->table->save($entity);
+    }
+
+    /**
+     * Tests making a node its own parent as a new entity.
+     *
+     * @expectedException \RuntimeException
+     * @expectedExceptionMessage Cannot set a node's parent as itself
+     * @return void
+     */
+    public function testReParentSelfNewEntity()
+    {
+        $entity = $this->table->newEntity(['name' => 'root']);
+        $entity->id = 1;
+        $entity->parent_id = $entity->id;
+        $this->table->save($entity);
     }
 
     /**
@@ -1344,7 +1415,7 @@ class TreeBehaviorTest extends TestCase
         $entity = $this->table->get(4);
         $this->assertEquals(2, $entity->depth);
 
-        // Non leaf node so depth of descendents will also change
+        // Non leaf node so depth of descendants will also change
         $entity = $this->table->get(6);
         $this->assertEquals(1, $entity->depth);
 

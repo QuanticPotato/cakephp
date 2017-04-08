@@ -14,14 +14,12 @@
  */
 namespace Cake\Test\TestCase\Core\Configure\Engine;
 
-use Cake\Core\App;
 use Cake\Core\Configure\Engine\IniConfig;
 use Cake\Core\Plugin;
 use Cake\TestSuite\TestCase;
 
 /**
- * Class IniConfigTest
- *
+ * IniConfigTest
  */
 class IniConfigTest extends TestCase
 {
@@ -235,7 +233,7 @@ class IniConfigTest extends TestCase
     {
         $engine = new IniConfig(TMP);
         $result = $engine->dump('test', $this->testData);
-        $this->assertTrue($result > 0);
+        $this->assertGreaterThan(0, $result);
 
         $expected = <<<INI
 [One]
@@ -255,7 +253,7 @@ INI;
         $this->assertTextEquals($expected, $result);
 
         $result = $engine->dump('test', $this->testData);
-        $this->assertTrue($result > 0);
+        $this->assertGreaterThan(0, $result);
 
         $contents = file_get_contents($file);
         $this->assertTextEquals($expected, $contents);

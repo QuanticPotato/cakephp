@@ -37,7 +37,6 @@ use Cake\Event\EventListenerInterface;
  * - `beforeRenderFile(Event $event, $viewFile)` - Called before any view fragment is rendered.
  * - `afterRenderFile(Event $event, $viewFile, $content)` - Called after any view fragment is rendered.
  *   If a listener returns a non-null value, the output of the rendered file will be set to that.
- *
  */
 class Helper implements EventListenerInterface
 {
@@ -75,7 +74,7 @@ class Helper implements EventListenerInterface
     /**
      * Request object
      *
-     * @var \Cake\Network\Request
+     * @var \Cake\Http\ServerRequest
      */
     public $request = null;
 
@@ -119,11 +118,13 @@ class Helper implements EventListenerInterface
         $this->_View = $View;
         $this->request = $View->request;
 
-        $this->config($config);
+        $this->setConfig($config);
 
         if (!empty($this->helpers)) {
             $this->_helperMap = $View->helpers()->normalizeArray($this->helpers);
         }
+
+        $this->initialize($config);
     }
 
     /**
@@ -149,8 +150,19 @@ class Helper implements EventListenerInterface
         if (isset($this->_helperMap[$name]) && !isset($this->{$name})) {
             $config = ['enabled' => false] + (array)$this->_helperMap[$name]['config'];
             $this->{$name} = $this->_View->loadHelper($this->_helperMap[$name]['class'], $config);
+
             return $this->{$name};
         }
+    }
+
+    /**
+     * Get the view instance this helper is bound to.
+     *
+     * @return \Cake\View\View The bound view instance.
+     */
+    public function getView()
+    {
+        return $this->_View;
     }
 
     /**
@@ -164,11 +176,14 @@ class Helper implements EventListenerInterface
      */
     protected function _confirm($message, $okCode, $cancelCode = '', $options = [])
     {
-        $message = json_encode($message);
+        $message = str_replace('\\\n', '\n', json_encode($message));
         $confirm = "if (confirm({$message})) { {$okCode} } {$cancelCode}";
-        if (isset($options['escape']) && $options['escape'] === false) {
+        // We cannot change the key here in 3.x, but the behavior is inverted in this case
+        $escape = isset($options['escape']) && $options['escape'] === false;
+        if ($escape) {
             $confirm = h($confirm);
         }
+
         return $confirm;
     }
 
@@ -176,7 +191,7 @@ class Helper implements EventListenerInterface
      * Adds the given class to the element options
      *
      * @param array $options Array options/attributes to add a class to
-     * @param string $class The class name being added.
+     * @param string|null $class The class name being added.
      * @param string $key the key to use for class.
      * @return array Array of options with $key set.
      */
@@ -187,6 +202,7 @@ class Helper implements EventListenerInterface
         } else {
             $options[$key] = $class;
         }
+
         return $options;
     }
 
@@ -217,7 +233,20 @@ class Helper implements EventListenerInterface
                 $events[$event] = $method;
             }
         }
+
         return $events;
+    }
+
+    /**
+     * Constructor hook method.
+     *
+     * Implement this method to avoid having to overwrite the constructor and call parent.
+     *
+     * @param array $config The configuration settings provided to this helper.
+     * @return void
+     */
+    public function initialize(array $config)
+    {
     }
 
     /**
@@ -235,7 +264,7 @@ class Helper implements EventListenerInterface
             'fieldset' => $this->fieldset,
             'tags' => $this->tags,
             'implementedEvents' => $this->implementedEvents(),
-            '_config' => $this->config(),
+            '_config' => $this->getConfig(),
         ];
     }
 }

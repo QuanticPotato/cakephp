@@ -16,7 +16,6 @@ namespace Cake\Mailer;
 
 use Cake\Core\App;
 use Cake\Mailer\Exception\MissingMailerException;
-use InvalidArgumentException;
 
 /**
  * Provides functionality for loading mailer classes
@@ -36,7 +35,7 @@ trait MailerAwareTrait
      * @return \Cake\Mailer\Mailer
      * @throws \Cake\Mailer\Exception\MissingMailerException if undefined mailer class.
      */
-    public function getMailer($name, Email $email = null)
+    protected function getMailer($name, Email $email = null)
     {
         if ($email === null) {
             $email = new Email();

@@ -14,15 +14,12 @@
  */
 namespace Cake\Test\TestCase\Shell;
 
-use Cake\Console\ConsoleIo;
-use Cake\Console\ConsoleOutput;
 use Cake\Routing\Router;
 use Cake\Shell\RoutesShell;
 use Cake\TestSuite\TestCase;
 
 /**
- * Class RoutesShellTest
- *
+ * RoutesShellTest
  */
 class RoutesShellTest extends TestCase
 {
@@ -35,8 +32,12 @@ class RoutesShellTest extends TestCase
     public function setUp()
     {
         parent::setUp();
-        $this->io = $this->getMock('Cake\Console\ConsoleIo', ['helper', 'out', 'err']);
-        $this->table = $this->getMock('Cake\Shell\Helper\TableHelper', [], [$this->io]);
+        $this->io = $this->getMockBuilder('Cake\Console\ConsoleIo')
+            ->setMethods(['helper', 'out', 'err'])
+            ->getMock();
+        $this->table = $this->getMockBuilder('Cake\Shell\Helper\TableHelper')
+            ->setConstructorArgs([$this->io])
+            ->getMock();
         $this->io->expects($this->any())
             ->method('helper')
             ->with('table')
@@ -169,6 +170,23 @@ class RoutesShellTest extends TestCase
         $this->shell->generate();
 
         $this->shell->args = ['controller:Articles', 'action:view', '2', '3'];
+        $this->shell->generate();
+    }
+
+    /**
+     * Test generating URLs with bool params
+     *
+     * @return void
+     */
+    public function testGenerateBoolParams()
+    {
+        $this->io->expects($this->never())
+            ->method('err');
+        $this->io->expects($this->at(0))
+            ->method('out')
+            ->with($this->stringContains('> https://example.com/articles/index'));
+
+        $this->shell->args = ['_ssl:true', '_host:example.com', 'controller:Articles', 'action:index'];
         $this->shell->generate();
     }
 

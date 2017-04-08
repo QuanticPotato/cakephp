@@ -18,12 +18,10 @@ namespace Cake\Test\TestCase\Cache\Engine;
 
 use Cake\Cache\Cache;
 use Cake\Cache\Engine\RedisEngine;
-use Cake\Core\Configure;
 use Cake\TestSuite\TestCase;
 
 /**
  * RedisEngineTest class
- *
  */
 class RedisEngineTest extends TestCase
 {
@@ -104,6 +102,38 @@ class RedisEngineTest extends TestCase
     }
 
     /**
+     * testConfigDsn method
+     *
+     * @return void
+     */
+    public function testConfigDsn()
+    {
+        Cache::config('redis_dsn', [
+            'url' => 'redis://localhost:6379?database=1&prefix=redis_'
+        ]);
+
+        $config = Cache::engine('redis_dsn')->config();
+        $expecting = [
+            'prefix' => 'redis_',
+            'duration' => 3600,
+            'probability' => 100,
+            'groups' => [],
+            'server' => 'localhost',
+            'port' => 6379,
+            'timeout' => 0,
+            'persistent' => true,
+            'password' => false,
+            'database' => '1',
+            'unix_socket' => false,
+            'host' => 'localhost',
+            'scheme' => 'redis',
+        ];
+        $this->assertEquals($expecting, $config);
+
+        Cache::drop('redis_dsn');
+    }
+
+    /**
      * testConnect method
      *
      * @return void
@@ -158,6 +188,23 @@ class RedisEngineTest extends TestCase
 
         Cache::drop('redisdb0');
         Cache::drop('redisdb1');
+    }
+
+    /**
+     * test write numbers method
+     *
+     * @return void
+     */
+    public function testWriteNumbers()
+    {
+        $result = Cache::write('test-counter', 1, 'redis');
+        $this->assertSame(1, Cache::read('test-counter', 'redis'));
+
+        $result = Cache::write('test-counter', 0, 'redis');
+        $this->assertSame(0, Cache::read('test-counter', 'redis'));
+
+        $result = Cache::write('test-counter', -1, 'redis');
+        $this->assertSame(-1, Cache::read('test-counter', 'redis'));
     }
 
     /**
@@ -371,7 +418,7 @@ class RedisEngineTest extends TestCase
     }
 
     /**
-     * Tests that deleteing from a groups-enabled config is possible
+     * Tests that deleting from a groups-enabled config is possible
      *
      * @return void
      */

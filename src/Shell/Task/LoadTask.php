@@ -19,10 +19,10 @@ use Cake\Filesystem\File;
 
 /**
  * Task for loading plugins.
- *
  */
 class LoadTask extends Shell
 {
+
     /**
      * Path to the bootstrap file.
      *
@@ -33,16 +33,22 @@ class LoadTask extends Shell
     /**
      * Execution method always used for tasks.
      *
-     * @param string $plugin The plugin name.
+     * @param string|null $plugin The plugin name.
      * @return bool
      */
     public function main($plugin = null)
     {
-        $this->bootstrap = ROOT . DS . 'config' . DS . 'bootstrap.php';
+        $filename = 'bootstrap';
+        if ($this->params['cli']) {
+            $filename .= '_cli';
+        }
 
-        if (empty($plugin)) {
-            $this->err('<error>You must provide a plugin name in CamelCase format.</error>');
-            $this->err('To load an "Example" plugin, run <info>`cake plugin load Example`</info>.');
+        $this->bootstrap = ROOT . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . $filename . '.php';
+
+        if (!$plugin) {
+            $this->err('You must provide a plugin name in CamelCase format.');
+            $this->err('To load an "Example" plugin, run `cake plugin load Example`.');
+
             return false;
         }
 
@@ -79,8 +85,10 @@ class LoadTask extends Shell
             $bootstrap->append(str_replace(', []', '', sprintf($append, $plugin, $options)));
             $this->out('');
             $this->out(sprintf('%s modified', $this->bootstrap));
+
             return true;
         }
+
         return false;
     }
 
@@ -106,8 +114,13 @@ class LoadTask extends Shell
                     'default' => false,
                 ])
                 ->addOption('autoload', [
-                    'help' => 'Will autoload the plugin using CakePHP. ' .
+                    'help' => 'Will autoload the plugin using CakePHP.' .
                         'Set to true if you are not using composer to autoload your plugin.',
+                    'boolean' => true,
+                    'default' => false,
+                ])
+                ->addOption('cli', [
+                    'help' => 'Use the bootstrap_cli file.',
                     'boolean' => true,
                     'default' => false,
                 ])

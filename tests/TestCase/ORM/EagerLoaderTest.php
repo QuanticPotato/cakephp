@@ -20,13 +20,11 @@ use Cake\Database\TypeMap;
 use Cake\Datasource\ConnectionManager;
 use Cake\ORM\EagerLoader;
 use Cake\ORM\Query;
-use Cake\ORM\Table;
 use Cake\ORM\TableRegistry;
 use Cake\TestSuite\TestCase;
 
 /**
  * Tests EagerLoader
- *
  */
 class EagerLoaderTest extends TestCase
 {
@@ -87,6 +85,9 @@ class EagerLoaderTest extends TestCase
             'name' => 'string',
             'clients.phone' => 'string',
             'phone' => 'string',
+            'clients__id' => 'integer',
+            'clients__name' => 'string',
+            'clients__phone' => 'string',
         ]);
         $this->ordersTypeMap = new TypeMap([
             'orders.id' => 'integer',
@@ -95,26 +96,34 @@ class EagerLoaderTest extends TestCase
             'total' => 'string',
             'orders.placed' => 'datetime',
             'placed' => 'datetime',
+            'orders__id' => 'integer',
+            'orders__total' => 'string',
+            'orders__placed' => 'datetime',
         ]);
         $this->orderTypesTypeMap = new TypeMap([
             'orderTypes.id' => 'integer',
             'id' => 'integer',
+            'orderTypes__id' => 'integer',
         ]);
         $this->stuffTypeMap = new TypeMap([
             'stuff.id' => 'integer',
             'id' => 'integer',
+            'stuff__id' => 'integer',
         ]);
         $this->stuffTypesTypeMap = new TypeMap([
             'stuffTypes.id' => 'integer',
             'id' => 'integer',
+            'stuffTypes__id' => 'integer',
         ]);
         $this->companiesTypeMap = new TypeMap([
             'companies.id' => 'integer',
             'id' => 'integer',
+            'companies__id' => 'integer',
         ]);
         $this->categoriesTypeMap = new TypeMap([
             'categories.id' => 'integer',
             'id' => 'integer',
+            'categories__id' => 'integer',
         ]);
     }
 
@@ -149,7 +158,10 @@ class EagerLoaderTest extends TestCase
             ]
         ];
 
-        $query = $this->getMock('\Cake\ORM\Query', ['join'], [$this->connection, $this->table]);
+        $query = $this->getMockBuilder('\Cake\ORM\Query')
+            ->setMethods(['join'])
+            ->setConstructorArgs([$this->connection, $this->table])
+            ->getMock();
 
         $query->typeMap($this->clientsTypeMap);
 
@@ -159,7 +171,7 @@ class EagerLoaderTest extends TestCase
                 'type' => 'LEFT',
                 'conditions' => new QueryExpression([
                     ['clients.id' => new IdentifierExpression('foo.client_id')],
-                ], $this->clientsTypeMap)
+                ], new TypeMap($this->clientsTypeMap->defaults()))
             ]])
             ->will($this->returnValue($query));
 
@@ -265,6 +277,29 @@ class EagerLoaderTest extends TestCase
     }
 
     /**
+     * Tests setting containments using direct key value pairs works just as with key array.
+     *
+     * @return void
+     */
+    public function testContainKeyValueNotation()
+    {
+        $loader = new EagerLoader;
+        $loader->contain([
+            'clients',
+            'companies' => 'categories',
+        ]);
+        $expected = [
+            'clients' => [
+            ],
+            'companies' => [
+                'categories' => [
+                ],
+            ],
+        ];
+        $this->assertEquals($expected, $loader->contain());
+    }
+
+    /**
      * Tests that it is possible to pass a function as the array value for contain
      *
      * @return void
@@ -295,6 +330,31 @@ class EagerLoaderTest extends TestCase
             'clients' => ['queryBuilder' => $builder]
         ]);
         $this->assertEquals($expected, $loader->contain());
+    }
+
+    /**
+     * Tests that query builders are stacked
+     *
+     * @return void
+     */
+    public function testContainMergeBuilders()
+    {
+        $loader = new EagerLoader;
+        $loader->contain([
+            'clients' => function ($query) {
+                return $query->select(['a']);
+            }
+        ]);
+        $loader->contain([
+            'clients' => function ($query) {
+                return $query->select(['b']);
+            }
+        ]);
+        $builder = $loader->contain()['clients']['queryBuilder'];
+        $table = TableRegistry::get('foo');
+        $query = new Query($this->connection, $table);
+        $query = $builder($query);
+        $this->assertEquals(['a', 'b'], $query->clause('select'));
     }
 
     /**
@@ -376,22 +436,7 @@ class EagerLoaderTest extends TestCase
     }
 
     /**
-     * Check that normalizing contains checks alias names.
-     *
-     * @expectedException \InvalidArgumentException
-     * @expectedExceptionMessage You have contained 'Clients' but that association was bound as 'clients'
-     * @return void
-     */
-    public function testNormalizedChecksAliasNames()
-    {
-        $contains = ['Clients'];
-        $loader = new EagerLoader;
-        $loader->contain($contains);
-        $loader->normalized($this->table);
-    }
-
-    /**
-     * Tests that the path for gettings to a deep assocition is materialized in an
+     * Tests that the path for getting to a deep association is materialized in an
      * array key
      *
      * @return void
@@ -410,11 +455,10 @@ class EagerLoaderTest extends TestCase
             ]
         ];
 
-        $query = $this->getMock(
-            '\Cake\ORM\Query',
-            ['join'],
-            [$this->connection, $this->table]
-        );
+        $query = $this->getMockBuilder('\Cake\ORM\Query')
+            ->setMethods(['join'])
+            ->setConstructorArgs([$this->connection, $this->table])
+            ->getMock();
 
         $loader = new EagerLoader;
         $loader->contain($contains);
@@ -485,11 +529,30 @@ class EagerLoaderTest extends TestCase
             $quoter = function ($e) {
                 return $this->connection->driver()->quoteIdentifier($e);
             };
+
             return array_combine(
                 array_map($quoter, array_keys($elements)),
                 array_map($quoter, array_values($elements))
             );
         }
+
         return $elements;
+    }
+
+    /**
+     * Asserts that matching('something') and setMatching('something') return consistent type.
+     *
+     * @return void
+     */
+    public function testSetMatchingReturnType()
+    {
+        $loader = new EagerLoader();
+        $result = $loader->setMatching('clients');
+        $this->assertInstanceOf(EagerLoader::class, $result);
+        $this->assertArrayHasKey('clients', $loader->getMatching());
+
+        $result = $loader->matching('customers');
+        $this->assertArrayHasKey('customers', $result);
+        $this->assertArrayHasKey('customers', $loader->getMatching());
     }
 }

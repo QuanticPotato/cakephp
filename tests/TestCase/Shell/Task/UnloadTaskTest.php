@@ -19,10 +19,13 @@ use Cake\TestSuite\TestCase;
 
 /**
  * UnloadTaskTest class
- *
  */
 class UnloadTaskTest extends TestCase
 {
+    /**
+     * @var \Cake\Shell\Task\UnloadTask|\PHPUnit_Framework_MockObject_MockObject
+     */
+    protected $Task;
 
     /**
      * setUp method
@@ -33,9 +36,14 @@ class UnloadTaskTest extends TestCase
     {
         parent::setUp();
 
-        $this->io = $this->getMock('Cake\Console\ConsoleIo', [], [], '', false);
+        $this->io = $this->getMockBuilder('Cake\Console\ConsoleIo')
+            ->disableOriginalConstructor()
+            ->getMock();
 
-        $this->Task = $this->getMock('Cake\Shell\Task\UnloadTask', ['in', 'out', 'err', '_stop'], [$this->io]);
+        $this->Task = $this->getMockBuilder('Cake\Shell\Task\UnloadTask')
+            ->setMethods(['in', 'out', 'err', '_stop'])
+            ->setConstructorArgs([$this->io])
+            ->getMock();
 
         $this->bootstrap = ROOT . DS . 'config' . DS . 'bootstrap.php';
 
@@ -76,6 +84,10 @@ class UnloadTaskTest extends TestCase
         $expected = "Plugin::load('TestPlugin', ['autoload' => true, 'bootstrap' => false, 'routes' => false]);";
         $this->assertContains($expected, $bootstrap->read());
 
+        $this->Task->params = [
+            'cli' => false
+        ];
+
         $action = $this->Task->main('TestPlugin');
 
         $this->assertTrue($action);
@@ -94,32 +106,36 @@ class UnloadTaskTest extends TestCase
     {
         $bootstrap = new File($this->bootstrap, false);
 
+        $this->Task->params = [
+            'cli' => false
+        ];
+
         //  Plugin::load('TestPlugin', [
-        //      'boostrap' => false
+        //      'bootstrap' => false
         //  ]);
-        $bootstrap->append("\nPlugin::load('TestPlugin', [\n\t'boostrap' => false\n]);\n");
+        $bootstrap->append("\nPlugin::load('TestPlugin', [\n\t'bootstrap' => false\n]);\n");
         $this->Task->main('TestPlugin');
-        $this->assertNotContains("Plugin::load('TestPlugin', [\n\t'boostrap' => false\n]);", $bootstrap->read());
+        $this->assertNotContains("Plugin::load('TestPlugin', [\n\t'bootstrap' => false\n]);", $bootstrap->read());
         $this->_clearBootstrap();
 
         //  Plugin::load(
         //      'TestPlugin',
-        //      [ 'boostrap' => false]
+        //      [ 'bootstrap' => false]
         //  );
-        $bootstrap->append("\nPlugin::load(\n\t'TestPlugin',\n\t[ 'boostrap' => false]\n);\n");
+        $bootstrap->append("\nPlugin::load(\n\t'TestPlugin',\n\t[ 'bootstrap' => false]\n);\n");
         $this->Task->main('TestPlugin');
-        $this->assertNotContains("Plugin::load(\n\t'TestPlugin',\n\t[ 'boostrap' => false]\n);", $bootstrap->read());
+        $this->assertNotContains("Plugin::load(\n\t'TestPlugin',\n\t[ 'bootstrap' => false]\n);", $bootstrap->read());
         $this->_clearBootstrap();
 
         //  Plugin::load(
         //      'Foo',
         //      [
-        //          'boostrap' => false
+        //          'bootstrap' => false
         //      ]
         //  );
-        $bootstrap->append("\nPlugin::load(\n\t'TestPlugin',\n\t[\n\t\t'boostrap' => false\n\t]\n);\n");
+        $bootstrap->append("\nPlugin::load(\n\t'TestPlugin',\n\t[\n\t\t'bootstrap' => false\n\t]\n);\n");
         $this->Task->main('TestPlugin');
-        $this->assertNotContains("Plugin::load(\n\t'TestPlugin',\n\t[\n\t\t'boostrap' => false\n\t]\n);", $bootstrap->read());
+        $this->assertNotContains("Plugin::load(\n\t'TestPlugin',\n\t[\n\t\t'bootstrap' => false\n\t]\n);", $bootstrap->read());
         $this->_clearBootstrap();
 
         //  Plugin::load('Test', [

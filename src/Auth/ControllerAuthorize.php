@@ -17,7 +17,7 @@ namespace Cake\Auth;
 use Cake\Controller\ComponentRegistry;
 use Cake\Controller\Controller;
 use Cake\Core\Exception\Exception;
-use Cake\Network\Request;
+use Cake\Http\ServerRequest;
 
 /**
  * An authorization adapter for AuthComponent. Provides the ability to authorize
@@ -27,7 +27,7 @@ use Cake\Network\Request;
  * ```
  *  public function isAuthorized($user)
  *  {
- *      if ($this->request->param('admin')) {
+ *      if ($this->request->getParam('admin')) {
  *          return $user['role'] === 'admin';
  *      }
  *      return !empty($user);
@@ -37,7 +37,7 @@ use Cake\Network\Request;
  * The above is simple implementation that would only authorize users of the
  * 'admin' role to access admin routing.
  *
- * @see AuthComponent::$authenticate
+ * @see \Cake\Controller\Component\AuthComponent::$authenticate
  */
 class ControllerAuthorize extends BaseAuthorize
 {
@@ -62,7 +62,7 @@ class ControllerAuthorize extends BaseAuthorize
      * Get/set the controller this authorize object will be working with. Also
      * checks that isAuthorized is implemented.
      *
-     * @param Controller|null $controller null to get, a controller to set.
+     * @param \Cake\Controller\Controller|null $controller null to get, a controller to set.
      * @return \Cake\Controller\Controller
      * @throws \Cake\Core\Exception\Exception If controller does not have method `isAuthorized()`.
      */
@@ -77,17 +77,18 @@ class ControllerAuthorize extends BaseAuthorize
             }
             $this->_Controller = $controller;
         }
+
         return $this->_Controller;
     }
 
     /**
      * Checks user authorization using a controller callback.
      *
-     * @param array $user Active user data
-     * @param \Cake\Network\Request $request Request instance.
+     * @param array|\ArrayAccess $user Active user data
+     * @param \Cake\Http\ServerRequest $request Request instance.
      * @return bool
      */
-    public function authorize($user, Request $request)
+    public function authorize($user, ServerRequest $request)
     {
         return (bool)$this->_Controller->isAuthorized($user);
     }

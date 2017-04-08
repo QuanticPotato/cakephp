@@ -14,7 +14,6 @@
  */
 namespace Cake\Test\TestCase\View;
 
-use Cake\Core\App;
 use Cake\Core\Configure;
 use Cake\Core\Plugin;
 use Cake\TestSuite\TestCase;
@@ -34,11 +33,20 @@ class HtmlAliasHelper extends Helper
 }
 
 /**
- * Class HelperRegistryTest
- *
+ * HelperRegistryTest
  */
 class HelperRegistryTest extends TestCase
 {
+
+    /**
+     * @var \Cake\View\HelperRegistry
+     */
+    public $Helpers;
+
+    /**
+     * @var \Cake\Event\EventManager
+     */
+    public $Events;
 
     /**
      * setUp
@@ -238,7 +246,7 @@ class HelperRegistryTest extends TestCase
         );
         $this->assertCount(1, $this->Events->listeners('View.beforeRender'));
 
-        $this->assertNull($this->Helpers->reset(), 'No return expected');
+        $this->Helpers->reset();
         $this->assertCount(0, $this->Events->listeners('View.beforeRender'));
 
         $this->assertNotSame($instance, $this->Helpers->load('EventListenerTest'));
@@ -310,7 +318,7 @@ class HelperRegistryTest extends TestCase
     /**
      * Loading a helper with different config, should throw an exception
      *
-     * @expectedException RuntimeException
+     * @expectedException \RuntimeException
      * @expectedExceptionMessage The "Html" alias has already been loaded with the following
      * @return void
      */
@@ -323,7 +331,7 @@ class HelperRegistryTest extends TestCase
     /**
      * Loading a helper with different config, should throw an exception
      *
-     * @expectedException RuntimeException
+     * @expectedException \RuntimeException
      * @expectedExceptionMessage The "Html" alias has already been loaded with the following
      * @return void
      */

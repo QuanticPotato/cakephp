@@ -16,6 +16,7 @@ namespace Cake\Database\Type;
 
 use Cake\Database\Driver;
 use Cake\Database\Type;
+use Cake\Database\TypeInterface;
 use PDO;
 use RuntimeException;
 
@@ -24,8 +25,30 @@ use RuntimeException;
  *
  * Use to convert float/decimal data between PHP and the database types.
  */
-class FloatType extends Type
+class FloatType extends Type implements TypeInterface
 {
+    /**
+     * Identifier name for this type.
+     *
+     * (This property is declared here again so that the inheritance from
+     * Cake\Database\Type can be removed in the future.)
+     *
+     * @var string|null
+     */
+    protected $_name = null;
+
+    /**
+     * Constructor.
+     *
+     * (This method is declared here again so that the inheritance from
+     * Cake\Database\Type can be removed in the future.)
+     *
+     * @param string|null $name The name identifying this type
+     */
+    public function __construct($name = null)
+    {
+        $this->_name = $name;
+    }
 
     /**
      * The class to use for representing number objects
@@ -46,26 +69,24 @@ class FloatType extends Type
      * Convert integer data into the database format.
      *
      * @param string|resource $value The value to convert.
-     * @param Driver $driver The driver instance to convert with.
-     * @return string|resource
+     * @param \Cake\Database\Driver $driver The driver instance to convert with.
+     * @return float|null
      */
     public function toDatabase($value, Driver $driver)
     {
         if ($value === null || $value === '') {
             return null;
         }
-        if (is_array($value)) {
-            return 1;
-        }
-        return floatval($value);
+
+        return (float)$value;
     }
 
     /**
      * Convert float values to PHP integers
      *
      * @param null|string|resource $value The value to convert.
-     * @param Driver $driver The driver instance to convert with.
-     * @return resource
+     * @param \Cake\Database\Driver $driver The driver instance to convert with.
+     * @return float|null
      * @throws \Cake\Core\Exception\Exception
      */
     public function toPHP($value, Driver $driver)
@@ -74,16 +95,17 @@ class FloatType extends Type
             return null;
         }
         if (is_array($value)) {
-            return 1;
+            return 1.0;
         }
-        return floatval($value);
+
+        return (float)$value;
     }
 
     /**
      * Get the correct PDO binding type for integer data.
      *
      * @param mixed $value The value being bound.
-     * @param Driver $driver The driver.
+     * @param \Cake\Database\Driver $driver The driver.
      * @return int
      */
     public function toStatement($value, Driver $driver)
@@ -95,7 +117,7 @@ class FloatType extends Type
      * Marshalls request data into PHP floats.
      *
      * @param mixed $value The value to convert.
-     * @return mixed Converted value.
+     * @return float|null Converted value.
      */
     public function marshal($value)
     {
@@ -104,11 +126,12 @@ class FloatType extends Type
         }
         if (is_numeric($value)) {
             return (float)$value;
-        } elseif (is_string($value) && $this->_useLocaleParser) {
+        }
+        if (is_string($value) && $this->_useLocaleParser) {
             return $this->_parseValue($value);
         }
         if (is_array($value)) {
-            return 1;
+            return 1.0;
         }
 
         return $value;
@@ -125,12 +148,14 @@ class FloatType extends Type
     {
         if ($enable === false) {
             $this->_useLocaleParser = $enable;
+
             return $this;
         }
         if (static::$numberClass === 'Cake\I18n\Number' ||
             is_subclass_of(static::$numberClass, 'Cake\I18n\Number')
         ) {
             $this->_useLocaleParser = $enable;
+
             return $this;
         }
         throw new RuntimeException(
@@ -139,7 +164,7 @@ class FloatType extends Type
     }
 
     /**
-     * Converts a string into a float point after parseing it using the locale
+     * Converts a string into a float point after parsing it using the locale
      * aware parser.
      *
      * @param string $value The value to parse and convert to an float.
@@ -148,6 +173,7 @@ class FloatType extends Type
     protected function _parseValue($value)
     {
         $class = static::$numberClass;
+
         return $class::parseFloat($value);
     }
 }

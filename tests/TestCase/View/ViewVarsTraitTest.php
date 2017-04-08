@@ -15,14 +15,17 @@ namespace Cake\Test\TestCase\View;
 
 use Cake\Controller\Controller;
 use Cake\TestSuite\TestCase;
-use Cake\View\ViewVarsTrait;
 
 /**
  * ViewVarsTrait test case
- *
  */
 class ViewVarsTraitTest extends TestCase
 {
+
+    /**
+     * @var \Cake\Controller\Controller;
+     */
+    public $subject;
 
     /**
      * setup
@@ -81,7 +84,7 @@ class ViewVarsTraitTest extends TestCase
      *
      * @return void
      */
-    public function testSetTwoParamCombind()
+    public function testSetTwoParamCombined()
     {
         $keys = ['one', 'key'];
         $vals = ['two', 'val'];
@@ -157,7 +160,7 @@ class ViewVarsTraitTest extends TestCase
         $result = $this->subject->viewOptions([], false);
 
         $this->assertTrue(is_array($result));
-        $this->assertTrue(empty($result));
+        $this->assertEmpty($result);
     }
 
     /**
@@ -185,8 +188,46 @@ class ViewVarsTraitTest extends TestCase
     {
         $this->subject->passedArgs = 'test';
         $this->subject->createView();
-        $result = $this->subject->viewbuilder()->options();
+        $result = $this->subject->viewBuilder()->getOptions();
         $this->assertEquals(['passedArgs' => 'test'], $result);
+    }
+
+    /**
+     * test that viewClass is used to create the view
+     *
+     * @return void
+     */
+    public function testCreateViewViewClass()
+    {
+        $this->subject->viewClass = 'Json';
+        $view = $this->subject->createView();
+        $this->assertInstanceOf('Cake\View\JsonView', $view);
+    }
+
+    /**
+     * test that viewBuilder settings override viewClass
+     *
+     * @return void
+     */
+    public function testCreateViewViewBuilder()
+    {
+        $this->subject->viewBuilder()->setClassName('Xml');
+        $this->subject->viewClass = 'Json';
+        $view = $this->subject->createView();
+        $this->assertInstanceOf('Cake\View\XmlView', $view);
+    }
+
+    /**
+     * test that parameters beats viewBuilder() and viewClass
+     *
+     * @return void
+     */
+    public function testCreateViewParameter()
+    {
+        $this->subject->viewBuilder()->setClassName('View');
+        $this->subject->viewClass = 'Json';
+        $view = $this->subject->createView('Xml');
+        $this->assertInstanceOf('Cake\View\XmlView', $view);
     }
 
     /**

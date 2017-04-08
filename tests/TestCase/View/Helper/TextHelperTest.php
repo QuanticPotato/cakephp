@@ -14,7 +14,6 @@
  */
 namespace Cake\Test\TestCase\View\Helper;
 
-use Cake\Core\App;
 use Cake\Core\Configure;
 use Cake\Core\Plugin;
 use Cake\TestSuite\TestCase;
@@ -22,8 +21,7 @@ use Cake\View\Helper\TextHelper;
 use Cake\View\View;
 
 /**
- * Class TextHelperTestObject
- *
+ * TextHelperTestObject
  */
 class TextHelperTestObject extends TextHelper
 {
@@ -41,7 +39,6 @@ class TextHelperTestObject extends TextHelper
 
 /**
  * StringMock class
- *
  */
 class StringMock
 {
@@ -49,10 +46,14 @@ class StringMock
 
 /**
  * TextHelperTest class
- *
  */
 class TextHelperTest extends TestCase
 {
+
+    /**
+     * @var \Cake\View\Helper\TextHelper
+     */
+    public $Text;
 
     /**
      * setUp method
@@ -91,7 +92,9 @@ class TextHelperTest extends TestCase
         $methods = [
             'stripLinks', 'excerpt', 'toList'
         ];
-        $String = $this->getMock(__NAMESPACE__ . '\StringMock', $methods);
+        $String = $this->getMockBuilder(__NAMESPACE__ . '\StringMock')
+            ->setMethods($methods)
+            ->getMock();
         $Text = new TextHelperTestObject($this->View, ['engine' => __NAMESPACE__ . '\StringMock']);
         $Text->attach($String);
         foreach ($methods as $method) {
@@ -102,7 +105,9 @@ class TextHelperTest extends TestCase
         $methods = [
             'highlight', 'truncate'
         ];
-        $String = $this->getMock(__NAMESPACE__ . '\StringMock', $methods);
+        $String = $this->getMockBuilder(__NAMESPACE__ . '\StringMock')
+            ->setMethods($methods)
+            ->getMock();
         $Text = new TextHelperTestObject($this->View, ['engine' => __NAMESPACE__ . '\StringMock']);
         $Text->attach($String);
         foreach ($methods as $method) {
@@ -113,7 +118,9 @@ class TextHelperTest extends TestCase
         $methods = [
             'tail'
         ];
-        $String = $this->getMock(__NAMESPACE__ . '\StringMock', $methods);
+        $String = $this->getMockBuilder(__NAMESPACE__ . '\StringMock')
+            ->setMethods($methods)
+            ->getMock();
         $Text = new TextHelperTestObject($this->View, ['engine' => __NAMESPACE__ . '\StringMock']);
         $Text->attach($String);
         foreach ($methods as $method) {
@@ -295,6 +302,10 @@ class TextHelperTest extends TestCase
                 'This is a test that includes <a href="http://www.wikipedia.org/wiki/Kanton_(Schweiz)#fragment">www.wikipedia.org/wiki/Kanton_(Schweiz)#fragment</a>',
             ],
             [
+                'This is a test that includes Http://example.com/test.php?foo=bar text',
+                'This is a test that includes <a href="Http://example.com/test.php?foo=bar">Http://example.com/test.php?foo=bar</a> text',
+            ],
+            [
                 'This is a test that includes http://example.com/test.php?foo=bar text',
                 'This is a test that includes <a href="http://example.com/test.php?foo=bar">http://example.com/test.php?foo=bar</a> text',
             ],
@@ -338,6 +349,26 @@ class TextHelperTest extends TestCase
                 'Text with a partial http://www.küchenschöhn-not-working.de URL',
                 'Text with a partial <a href="http://www.küchenschöhn-not-working.de">http://www.küchenschöhn-not-working.de</a> URL'
             ],
+            [
+                "Text with partial www.cakephp.org\r\nwww.cakephp.org urls and CRLF",
+                "Text with partial <a href=\"http://www.cakephp.org\">www.cakephp.org</a>\r\n<a href=\"http://www.cakephp.org\">www.cakephp.org</a> urls and CRLF"
+            ],
+            [
+                'https://nl.wikipedia.org/wiki/Exploit_(computerbeveiliging)',
+                '<a href="https://nl.wikipedia.org/wiki/Exploit_(computerbeveiliging)">https://nl.wikipedia.org/wiki/Exploit_(computerbeveiliging)</a>'
+            ],
+            [
+                'http://dev.local/threads/search?search_string=this+is+a+test',
+                '<a href="http://dev.local/threads/search?search_string=this+is+a+test">http://dev.local/threads/search?search_string=this+is+a+test</a>'
+            ],
+            [
+                'http://www.ad.nl/show/giel-beelen-heeft-weinig-moeite-met-rijontzegging~acd8b6ed',
+                '<a href="http://www.ad.nl/show/giel-beelen-heeft-weinig-moeite-met-rijontzegging~acd8b6ed">http://www.ad.nl/show/giel-beelen-heeft-weinig-moeite-met-rijontzegging~acd8b6ed</a>'
+            ],
+            [
+                'https://sevvlor.com/page%20not%20found',
+                '<a href="https://sevvlor.com/page%20not%20found">https://sevvlor.com/page%20not%20found</a>'
+            ]
         ];
     }
 
@@ -440,7 +471,7 @@ class TextHelperTest extends TestCase
     /**
      * Data provider for autoLinkEmail.
      *
-     * @return void
+     * @return array
      */
     public function autoLinkEmailProvider()
     {

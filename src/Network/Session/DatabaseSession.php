@@ -23,7 +23,6 @@ use SessionHandlerInterface;
 
 /**
  * DatabaseSession provides methods to be used with Session.
- *
  */
 class DatabaseSession implements SessionHandlerInterface
 {
@@ -89,26 +88,32 @@ class DatabaseSession implements SessionHandlerInterface
      * Method used to read from a database session.
      *
      * @param int|string $id The key of the value to read
-     * @return mixed The value of the key or false if it does not exist
+     * @return string The value of the key or empty if it does not exist
      */
     public function read($id)
     {
         $result = $this->_table
             ->find('all')
             ->select(['data'])
-            ->where([$this->_table->primaryKey() => $id])
-            ->hydrate(false)
+            ->where([$this->_table->getPrimaryKey() => $id])
+            ->enableHydration(false)
             ->first();
 
         if (empty($result)) {
-            return false;
+            return '';
         }
 
         if (is_string($result['data'])) {
             return $result['data'];
         }
 
-        return stream_get_contents($result['data']);
+        $session = stream_get_contents($result['data']);
+
+        if ($session === false) {
+            return '';
+        }
+
+        return $session;
     }
 
     /**
@@ -125,8 +130,9 @@ class DatabaseSession implements SessionHandlerInterface
         }
         $expires = time() + $this->_timeout;
         $record = compact('data', 'expires');
-        $record[$this->_table->primaryKey()] = $id;
+        $record[$this->_table->getPrimaryKey()] = $id;
         $result = $this->_table->save(new Entity($record));
+
         return (bool)$result;
     }
 
@@ -138,10 +144,12 @@ class DatabaseSession implements SessionHandlerInterface
      */
     public function destroy($id)
     {
-        return (bool)$this->_table->delete(new Entity(
-            [$this->_table->primaryKey() => $id],
+        $this->_table->delete(new Entity(
+            [$this->_table->getPrimaryKey() => $id],
             ['markNew' => false]
         ));
+
+        return true;
     }
 
     /**
@@ -152,7 +160,8 @@ class DatabaseSession implements SessionHandlerInterface
      */
     public function gc($maxlifetime)
     {
-        $this->_table->deleteAll(['expires <' => time() - $maxlifetime]);
+        $this->_table->deleteAll(['expires <' => time()]);
+
         return true;
     }
 }

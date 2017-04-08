@@ -5,7 +5,7 @@
     "authors": [
         {
         "name": "CakePHP Community",
-        "homepage": "http://cakephp.org"
+        "homepage": "https://cakephp.org"
     }
     ],
     "autoload": {
@@ -13,6 +13,5 @@
             "Cake\\Collection\\": "."
         },
         "files": ["functions.php"]
-    },
-    "minimum-stability": "beta"
+    }
 }

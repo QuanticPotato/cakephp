@@ -20,15 +20,18 @@ use Cake\Filesystem\File;
 use Cake\Filesystem\Folder;
 use Cake\TestSuite\TestCase;
 use Cake\View\Helper\RssHelper;
-use Cake\View\Helper\TimeHelper;
 use Cake\View\View;
 
 /**
  * RssHelperTest class
- *
  */
 class RssHelperTest extends TestCase
 {
+
+    /**
+     * @var \Cake\View\Helper\RssHelper
+     */
+    public $Rss;
 
     /**
      * setUp method

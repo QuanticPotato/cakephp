@@ -14,16 +14,12 @@
  */
 namespace Cake\Test\TestCase\Database\Driver;
 
-use Cake\Core\Configure;
-use Cake\Database\Connection;
-use Cake\Database\Driver\Mysql;
 use Cake\Datasource\ConnectionManager;
 use Cake\TestSuite\TestCase;
-use \PDO;
+use PDO;
 
 /**
  * Tests Mysql driver
- *
  */
 class MysqlTest extends TestCase
 {
@@ -47,7 +43,9 @@ class MysqlTest extends TestCase
      */
     public function testConnectionConfigDefault()
     {
-        $driver = $this->getMock('Cake\Database\Driver\Mysql', ['_connect', 'connection']);
+        $driver = $this->getMockBuilder('Cake\Database\Driver\Mysql')
+            ->setMethods(['_connect', 'connection'])
+            ->getMock();
         $dsn = 'mysql:host=localhost;port=3306;dbname=cake;charset=utf8';
         $expected = [
             'persistent' => true,
@@ -67,7 +65,9 @@ class MysqlTest extends TestCase
             PDO::MYSQL_ATTR_USE_BUFFERED_QUERY => true,
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         ];
-        $connection = $this->getMock('StdClass', ['exec']);
+        $connection = $this->getMockBuilder('StdClass')
+            ->setMethods(['exec'])
+            ->getMock();
 
         $driver->expects($this->once())->method('_connect')
             ->with($dsn, $expected);
@@ -94,20 +94,19 @@ class MysqlTest extends TestCase
             'port' => 3440,
             'flags' => [1 => true, 2 => false],
             'encoding' => 'a-language',
-            'timezone' => 'Antartica',
+            'timezone' => 'Antarctica',
             'init' => [
                 'Execute this',
                 'this too',
             ]
         ];
-        $driver = $this->getMock(
-            'Cake\Database\Driver\Mysql',
-            ['_connect', 'connection'],
-            [$config]
-        );
+        $driver = $this->getMockBuilder('Cake\Database\Driver\Mysql')
+            ->setMethods(['_connect', 'connection'])
+            ->setConstructorArgs([$config])
+            ->getMock();
         $dsn = 'mysql:host=foo;port=3440;dbname=bar;charset=a-language';
         $expected = $config;
-        $expected['init'][] = "SET time_zone = 'Antartica'";
+        $expected['init'][] = "SET time_zone = 'Antarctica'";
         $expected['init'][] = "SET NAMES a-language";
         $expected['flags'] += [
             PDO::ATTR_PERSISTENT => false,
@@ -115,10 +114,12 @@ class MysqlTest extends TestCase
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         ];
 
-        $connection = $this->getMock('StdClass', ['exec']);
+        $connection = $this->getMockBuilder('StdClass')
+            ->setMethods(['exec'])
+            ->getMock();
         $connection->expects($this->at(0))->method('exec')->with('Execute this');
         $connection->expects($this->at(1))->method('exec')->with('this too');
-        $connection->expects($this->at(2))->method('exec')->with("SET time_zone = 'Antartica'");
+        $connection->expects($this->at(2))->method('exec')->with("SET time_zone = 'Antarctica'");
         $connection->expects($this->at(3))->method('exec')->with("SET NAMES a-language");
         $connection->expects($this->exactly(4))->method('exec');
 
@@ -127,5 +128,39 @@ class MysqlTest extends TestCase
         $driver->expects($this->any())->method('connection')
             ->will($this->returnValue($connection));
         $driver->connect($config);
+    }
+
+    /**
+     * Test isConnected
+     *
+     * @return void
+     */
+    public function testIsConnected()
+    {
+        $connection = ConnectionManager::get('test');
+        $connection->disconnect();
+        $this->assertFalse($connection->isConnected(), 'Not connected now.');
+
+        $connection->connect();
+        $this->assertTrue($connection->isConnected(), 'Should be connected.');
+    }
+
+    public function testRollbackTransactionAutoConnect()
+    {
+        $connection = ConnectionManager::get('test');
+        $connection->disconnect();
+
+        $driver = $connection->driver();
+        $this->assertFalse($driver->rollbackTransaction());
+        $this->assertTrue($driver->isConnected());
+    }
+
+    public function testCommitTransactionAutoConnect()
+    {
+        $connection = ConnectionManager::get('test');
+        $driver = $connection->driver();
+
+        $this->assertFalse($driver->commitTransaction());
+        $this->assertTrue($driver->isConnected());
     }
 }

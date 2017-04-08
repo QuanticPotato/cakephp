@@ -19,8 +19,6 @@ use Cake\Database\ValueBinder;
 
 /**
  * An expression object for complex ORDER BY clauses
- *
- * @internal
  */
 class OrderClauseExpression implements ExpressionInterface, FieldInterface
 {
@@ -54,6 +52,7 @@ class OrderClauseExpression implements ExpressionInterface, FieldInterface
         if ($field instanceof ExpressionInterface) {
             $field = $field->sql($generator);
         }
+
         return sprintf("%s %s", $field, $this->_direction);
     }
 

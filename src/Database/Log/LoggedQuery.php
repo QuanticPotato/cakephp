@@ -33,14 +33,14 @@ class LoggedQuery
     /**
      * Number of milliseconds this query took to complete
      *
-     * @var float
+     * @var int
      */
     public $took = 0;
 
     /**
      * Associative array with the params bound to the query string
      *
-     * @var string
+     * @var array
      */
     public $params = [];
 
@@ -54,7 +54,7 @@ class LoggedQuery
     /**
      * The exception that was thrown by the execution of this query
      *
-     * @var \Exception
+     * @var \Exception|null
      */
     public $error;
 
@@ -65,6 +65,6 @@ class LoggedQuery
      */
     public function __toString()
     {
-        return $this->query;
+        return "duration={$this->took} rows={$this->numRows} {$this->query}";
     }
 }

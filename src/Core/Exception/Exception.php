@@ -16,7 +16,6 @@ use RuntimeException;
 
 /**
  * Base class that all CakePHP Exceptions extend.
- *
  */
 class Exception extends RuntimeException
 {
@@ -37,9 +36,9 @@ class Exception extends RuntimeException
     protected $_messageTemplate = '';
 
     /**
-     * Array of headers to be passed to Cake\Network\Response::header()
+     * Array of headers to be passed to Cake\Http\Response::header()
      *
-     * @var array
+     * @var array|null
      */
     protected $_responseHeaders = null;
 
@@ -52,7 +51,7 @@ class Exception extends RuntimeException
      * @param string|array $message Either the string of the error message, or an array of attributes
      *   that are made available in the view, and sprintf()'d into Exception::$_messageTemplate
      * @param int $code The code of the error, is also the HTTP status code for the error.
-     * @param \Exception $previous the previous exception.
+     * @param \Exception|null $previous the previous exception.
      */
     public function __construct($message, $code = 500, $previous = null)
     {
@@ -76,12 +75,12 @@ class Exception extends RuntimeException
     /**
      * Get/set the response header to be used
      *
-     * See also Cake\Network\Response::header()
+     * See also Cake\Http\Response::header()
      *
      * @param string|array|null $header An array of header strings or a single header string
      *  - an associative array of "header name" => "header value"
      *  - an array of string headers is also accepted
-     * @param string $value The header value.
+     * @param string|null $value The header value.
      * @return array
      */
     public function responseHeader($header = null, $value = null)

@@ -5,7 +5,7 @@
     "authors": [
         {
         "name": "CakePHP Community",
-        "homepage": "http://cakephp.org"
+        "homepage": "https://cakephp.org"
     }
     ],
     "autoload": {
@@ -17,11 +17,10 @@
     "require": {
         "cakephp/core": "~3.0",
         "ext-intl": "*",
-        "nesbot/Carbon": "1.13.*",
-        "aura/intl": "1.1.*"
+        "cakephp/chronos": "*",
+        "aura/intl": "^3.0.0"
     },
     "suggest": {
         "cakephp/cache": "Require this if you want automatic caching of translators"
-    },
-    "minimum-stability": "dev"
+    }
 }

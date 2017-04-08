@@ -14,7 +14,7 @@
  */
 namespace Cake\Test\TestCase\View\Form;
 
-use Cake\Network\Request;
+use Cake\Http\ServerRequest;
 use Cake\TestSuite\TestCase;
 use Cake\View\Form\ArrayContext;
 
@@ -32,7 +32,7 @@ class ArrayContextTest extends TestCase
     public function setUp()
     {
         parent::setUp();
-        $this->request = new Request();
+        $this->request = new ServerRequest();
     }
 
     /**
@@ -164,6 +164,24 @@ class ArrayContextTest extends TestCase
     {
         $context = new ArrayContext($this->request, []);
         $this->assertNull($context->val('Comments.field'));
+    }
+
+    /**
+     * Test getting default value
+     *
+     * @return void
+     */
+    public function testValDefault()
+    {
+        $context = new ArrayContext($this->request, [
+            'defaults' => [
+                'title' => 'Default value',
+            ]
+        ]);
+
+        $this->assertEquals('Default value', $context->val('title'));
+        $result = $context->val('title', ['default' => 'explicit default']);
+        $this->assertEquals('explicit default', $result);
     }
 
     /**

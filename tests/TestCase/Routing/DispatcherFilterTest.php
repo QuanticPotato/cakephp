@@ -15,8 +15,8 @@
 namespace Cake\Test\TestCase\Routing;
 
 use Cake\Event\Event;
-use Cake\Network\Request;
-use Cake\Network\Response;
+use Cake\Http\Response;
+use Cake\Http\ServerRequest;
 use Cake\Routing\DispatcherFilter;
 use Cake\TestSuite\TestCase;
 
@@ -87,21 +87,21 @@ class DispatcherFilterTest extends TestCase
      */
     public function testMatchesWithFor()
     {
-        $request = new Request(['url' => '/articles/view']);
+        $request = new ServerRequest(['url' => '/articles/view']);
         $event = new Event('Dispatcher.beforeDispatch', $this, compact('request'));
         $filter = new DispatcherFilter(['for' => '/articles']);
         $this->assertTrue($filter->matches($event));
 
-        $request = new Request(['url' => '/blog/articles']);
+        $request = new ServerRequest(['url' => '/blog/articles']);
         $event = new Event('Dispatcher.beforeDispatch', $this, compact('request'));
         $this->assertFalse($filter->matches($event), 'Does not start with /articles');
 
-        $request = new Request(['url' => '/articles/edit/1']);
+        $request = new ServerRequest(['url' => '/articles/edit/1']);
         $event = new Event('Dispatcher.beforeDispatch', $this, compact('request'));
         $filter = new DispatcherFilter(['for' => 'preg:#^/articles/edit/\d+$#']);
         $this->assertTrue($filter->matches($event));
 
-        $request = new Request(['url' => '/blog/articles/edit/1']);
+        $request = new ServerRequest(['url' => '/blog/articles/edit/1']);
         $event = new Event('Dispatcher.beforeDispatch', $this, compact('request'));
         $this->assertFalse($filter->matches($event), 'Does not start with /articles');
     }
@@ -115,12 +115,13 @@ class DispatcherFilterTest extends TestCase
     public function testMatchesWithWhen()
     {
         $matcher = function ($request, $response) {
-            $this->assertInstanceOf('Cake\Network\Request', $request);
-            $this->assertInstanceOf('Cake\Network\Response', $response);
+            $this->assertInstanceOf('Cake\Http\ServerRequest', $request);
+            $this->assertInstanceOf('Cake\Http\Response', $response);
+
             return true;
         };
 
-        $request = new Request(['url' => '/articles/view']);
+        $request = new ServerRequest(['url' => '/articles/view']);
         $response = new Response();
         $event = new Event('Dispatcher.beforeDispatch', $this, compact('response', 'request'));
         $filter = new DispatcherFilter(['when' => $matcher]);
@@ -141,7 +142,7 @@ class DispatcherFilterTest extends TestCase
      */
     public function testMatchesWithForAndWhen()
     {
-        $request = new Request(['url' => '/articles/view']);
+        $request = new ServerRequest(['url' => '/articles/view']);
         $response = new Response();
 
         $matcher = function () {
@@ -173,13 +174,15 @@ class DispatcherFilterTest extends TestCase
      */
     public function testImplementedEventsMethodName()
     {
-        $request = new Request(['url' => '/articles/view']);
+        $request = new ServerRequest(['url' => '/articles/view']);
         $response = new Response();
 
         $beforeEvent = new Event('Dispatcher.beforeDispatch', $this, compact('response', 'request'));
         $afterEvent = new Event('Dispatcher.afterDispatch', $this, compact('response', 'request'));
 
-        $filter = $this->getMock('Cake\Routing\DispatcherFilter', ['beforeDispatch', 'afterDispatch']);
+        $filter = $this->getMockBuilder('Cake\Routing\DispatcherFilter')
+            ->setMethods(['beforeDispatch', 'afterDispatch'])
+            ->getMock();
         $filter->expects($this->at(0))
             ->method('beforeDispatch')
             ->with($beforeEvent);
@@ -199,16 +202,15 @@ class DispatcherFilterTest extends TestCase
      */
     public function testHandleAppliesFor()
     {
-        $request = new Request(['url' => '/articles/view']);
+        $request = new ServerRequest(['url' => '/articles/view']);
         $response = new Response();
 
         $event = new Event('Dispatcher.beforeDispatch', $this, compact('response', 'request'));
 
-        $filter = $this->getMock(
-            'Cake\Routing\DispatcherFilter',
-            ['beforeDispatch'],
-            [['for' => '/admin']]
-        );
+        $filter = $this->getMockBuilder('Cake\Routing\DispatcherFilter')
+            ->setMethods(['beforeDispatch'])
+            ->setConstructorArgs([['for' => '/admin']])
+            ->getMock();
         $filter->expects($this->never())
             ->method('beforeDispatch');
 
@@ -223,7 +225,7 @@ class DispatcherFilterTest extends TestCase
      */
     public function testHandleAppliesWhen()
     {
-        $request = new Request(['url' => '/articles/view']);
+        $request = new ServerRequest(['url' => '/articles/view']);
         $response = new Response();
 
         $event = new Event('Dispatcher.beforeDispatch', $this, compact('response', 'request'));
@@ -231,11 +233,10 @@ class DispatcherFilterTest extends TestCase
             return false;
         };
 
-        $filter = $this->getMock(
-            'Cake\Routing\DispatcherFilter',
-            ['beforeDispatch'],
-            [['when' => $matcher]]
-        );
+        $filter = $this->getMockBuilder('Cake\Routing\DispatcherFilter')
+            ->setMethods(['beforeDispatch'])
+            ->setConstructorArgs([['when' => $matcher]])
+            ->getMock();
         $filter->expects($this->never())
             ->method('beforeDispatch');
 

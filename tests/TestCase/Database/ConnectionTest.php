@@ -16,8 +16,11 @@ namespace Cake\Test\TestCase\Database;
 
 use Cake\Core\Configure;
 use Cake\Database\Connection;
+use Cake\Database\Driver\Mysql;
+use Cake\Database\Exception\NestedTransactionRollbackException;
 use Cake\Datasource\ConnectionManager;
 use Cake\TestSuite\TestCase;
+use ReflectionMethod;
 
 /**
  * Tests Connection class
@@ -27,10 +30,25 @@ class ConnectionTest extends TestCase
 
     public $fixtures = ['core.things'];
 
+    /**
+     * Where the NestedTransactionRollbackException was created.
+     *
+     * @var int
+     */
+    protected $rollbackSourceLine = -1;
+
+    /**
+     * Internal states of nested transaction.
+     *
+     * @var array
+     */
+    protected $nestedTransactionStates = [];
+
     public function setUp()
     {
-        $this->connection = ConnectionManager::get('test');
         parent::setUp();
+        $this->connection = ConnectionManager::get('test');
+        Configure::write('App.namespace', 'TestApp');
     }
 
     public function tearDown()
@@ -48,10 +66,11 @@ class ConnectionTest extends TestCase
      */
     public function getMockFormDriver()
     {
-        $driver = $this->getMock('Cake\Database\Driver');
+        $driver = $this->getMockBuilder('Cake\Database\Driver')->getMock();
         $driver->expects($this->once())
             ->method('enabled')
             ->will($this->returnValue(true));
+
         return $driver;
     }
 
@@ -111,8 +130,29 @@ class ConnectionTest extends TestCase
      */
     public function testDisabledDriver()
     {
-        $mock = $this->getMock('\Cake\Database\Connection\Driver', ['enabled'], [], 'DriverMock');
+        $mock = $this->getMockBuilder(Mysql::class)
+            ->setMethods(['enabled'])
+            ->setMockClassName('DriverMock')
+            ->getMock();
         $connection = new Connection(['driver' => $mock]);
+    }
+
+    /**
+     * Tests that the `driver` option supports the short classname/plugin syntax.
+     *
+     * @return void
+     */
+    public function testDriverOptionClassNameSupport()
+    {
+        $connection = new Connection(['driver' => 'TestDriver']);
+        $this->assertInstanceOf('\TestApp\Database\Driver\TestDriver', $connection->driver());
+
+        $connection = new Connection(['driver' => 'TestPlugin.TestDriver']);
+        $this->assertInstanceOf('\TestPlugin\Database\Driver\TestDriver', $connection->driver());
+
+        list(, $name) = namespaceSplit(get_class($this->connection->driver()));
+        $connection = new Connection(['driver' => $name]);
+        $this->assertInstanceOf(get_class($this->connection->driver()), $connection->driver());
     }
 
     /**
@@ -411,17 +451,17 @@ class ConnectionTest extends TestCase
      */
     public function testDeleteWithConditions()
     {
-        $this->connection->delete('things', ['id' => '1-rest-is-ommited'], ['id' => 'integer']);
+        $this->connection->delete('things', ['id' => '1-rest-is-omitted'], ['id' => 'integer']);
         $result = $this->connection->execute('SELECT * FROM things');
         $this->assertCount(1, $result);
         $result->closeCursor();
 
-        $this->connection->delete('things', ['id' => '1-rest-is-ommited'], ['id' => 'integer']);
+        $this->connection->delete('things', ['id' => '1-rest-is-omitted'], ['id' => 'integer']);
         $result = $this->connection->execute('SELECT * FROM things');
         $this->assertCount(1, $result);
         $result->closeCursor();
 
-        $this->connection->delete('things', ['id' => '2-rest-is-ommited'], ['id' => 'integer']);
+        $this->connection->delete('things', ['id' => '2-rest-is-omitted'], ['id' => 'integer']);
         $result = $this->connection->execute('SELECT * FROM things');
         $this->assertCount(0, $result);
         $result->closeCursor();
@@ -454,7 +494,7 @@ class ConnectionTest extends TestCase
      *
      * @return void
      */
-    public function testVirtualNestedTrasanction()
+    public function testVirtualNestedTransaction()
     {
         //starting 3 virtual transaction
         $this->connection->begin();
@@ -478,7 +518,7 @@ class ConnectionTest extends TestCase
      *
      * @return void
      */
-    public function testVirtualNestedTrasanction2()
+    public function testVirtualNestedTransaction2()
     {
         //starting 3 virtual transaction
         $this->connection->begin();
@@ -501,7 +541,7 @@ class ConnectionTest extends TestCase
      * @return void
      */
 
-    public function testVirtualNestedTrasanction3()
+    public function testVirtualNestedTransaction3()
     {
         //starting 3 virtual transaction
         $this->connection->begin();
@@ -667,7 +707,9 @@ class ConnectionTest extends TestCase
      */
     public function testQuoteIdentifier()
     {
-        $driver = $this->getMock('Cake\Database\Driver\Sqlite', ['enabled']);
+        $driver = $this->getMockBuilder('Cake\Database\Driver\Sqlite')
+            ->setMethods(['enabled'])
+            ->getMock();
         $driver->expects($this->once())
             ->method('enabled')
             ->will($this->returnValue(true));
@@ -797,7 +839,7 @@ class ConnectionTest extends TestCase
      */
     public function testLogFunction()
     {
-        $logger = $this->getMock('\Cake\Database\Log\QueryLogger');
+        $logger = $this->getMockBuilder('\Cake\Database\Log\QueryLogger')->getMock();
         $this->connection->logger($logger);
         $logger->expects($this->once())->method('log')
             ->with($this->logicalAnd(
@@ -824,7 +866,7 @@ class ConnectionTest extends TestCase
         $driver = $this->getMockFormDriver();
         $connection->driver($driver);
 
-        $logger = $this->getMock('\Cake\Database\Log\QueryLogger');
+        $logger = $this->getMockBuilder('\Cake\Database\Log\QueryLogger')->getMock();
         $connection->logger($logger);
         $logger->expects($this->at(0))->method('log')
             ->with($this->logicalAnd(
@@ -850,13 +892,12 @@ class ConnectionTest extends TestCase
     public function testLogCommitTransaction()
     {
         $driver = $this->getMockFormDriver();
-        $connection = $this->getMock(
-            '\Cake\Database\Connection',
-            ['connect'],
-            [['driver' => $driver]]
-        );
+        $connection = $this->getMockBuilder('\Cake\Database\Connection')
+            ->setMethods(['connect'])
+            ->setConstructorArgs([['driver' => $driver]])
+            ->getMock();
 
-        $logger = $this->getMock('\Cake\Database\Log\QueryLogger');
+        $logger = $this->getMockBuilder('\Cake\Database\Log\QueryLogger')->getMock();
         $connection->logger($logger);
 
         $logger->expects($this->at(1))->method('log')
@@ -878,15 +919,15 @@ class ConnectionTest extends TestCase
     public function testTransactionalSuccess()
     {
         $driver = $this->getMockFormDriver();
-        $connection = $this->getMock(
-            '\Cake\Database\Connection',
-            ['connect', 'commit', 'begin'],
-            [['driver' => $driver]]
-        );
+        $connection = $this->getMockBuilder('\Cake\Database\Connection')
+            ->setMethods(['connect', 'commit', 'begin'])
+            ->setConstructorArgs([['driver' => $driver]])
+            ->getMock();
         $connection->expects($this->at(0))->method('begin');
         $connection->expects($this->at(1))->method('commit');
         $result = $connection->transactional(function ($conn) use ($connection) {
             $this->assertSame($connection, $conn);
+
             return 'thing';
         });
         $this->assertEquals('thing', $result);
@@ -901,16 +942,16 @@ class ConnectionTest extends TestCase
     public function testTransactionalFail()
     {
         $driver = $this->getMockFormDriver();
-        $connection = $this->getMock(
-            '\Cake\Database\Connection',
-            ['connect', 'commit', 'begin', 'rollback'],
-            [['driver' => $driver]]
-        );
+        $connection = $this->getMockBuilder('\Cake\Database\Connection')
+            ->setMethods(['connect', 'commit', 'begin', 'rollback'])
+            ->setConstructorArgs([['driver' => $driver]])
+            ->getMock();
         $connection->expects($this->at(0))->method('begin');
         $connection->expects($this->at(1))->method('rollback');
         $connection->expects($this->never())->method('commit');
         $result = $connection->transactional(function ($conn) use ($connection) {
             $this->assertSame($connection, $conn);
+
             return false;
         });
         $this->assertFalse($result);
@@ -927,11 +968,10 @@ class ConnectionTest extends TestCase
     public function testTransactionalWithException()
     {
         $driver = $this->getMockFormDriver();
-        $connection = $this->getMock(
-            '\Cake\Database\Connection',
-            ['connect', 'commit', 'begin', 'rollback'],
-            [['driver' => $driver]]
-        );
+        $connection = $this->getMockBuilder('\Cake\Database\Connection')
+            ->setMethods(['connect', 'commit', 'begin', 'rollback'])
+            ->setConstructorArgs([['driver' => $driver]])
+            ->getMock();
         $connection->expects($this->at(0))->method('begin');
         $connection->expects($this->at(1))->method('rollback');
         $connection->expects($this->never())->method('commit');
@@ -949,17 +989,152 @@ class ConnectionTest extends TestCase
     public function testSchemaCollection()
     {
         $driver = $this->getMockFormDriver();
-        $connection = $this->getMock(
-            '\Cake\Database\Connection',
-            ['connect'],
-            [['driver' => $driver]]
-        );
+        $connection = $this->getMockBuilder('\Cake\Database\Connection')
+            ->setMethods(['connect'])
+            ->setConstructorArgs([['driver' => $driver]])
+            ->getMock();
 
         $schema = $connection->schemaCollection();
         $this->assertInstanceOf('Cake\Database\Schema\Collection', $schema);
 
-        $schema = $this->getMock('Cake\Database\Schema\Collection', [], [$connection]);
+        $schema = $this->getMockBuilder('Cake\Database\Schema\Collection')
+            ->setConstructorArgs([$connection])
+            ->getMock();
         $connection->schemaCollection($schema);
         $this->assertSame($schema, $connection->schemaCollection());
+    }
+
+    /**
+     * Tests that allowed nesting of commit/rollback operations doesn't
+     * throw any exceptions.
+     *
+     * @return void
+     */
+    public function testNestedTransactionRollbackExceptionNotThrown()
+    {
+        $this->connection->transactional(function () {
+            $this->connection->transactional(function () {
+                return true;
+            });
+
+            return true;
+        });
+        $this->assertFalse($this->connection->inTransaction());
+
+        $this->connection->transactional(function () {
+            $this->connection->transactional(function () {
+                return true;
+            });
+
+            return false;
+        });
+        $this->assertFalse($this->connection->inTransaction());
+
+        $this->connection->transactional(function () {
+            $this->connection->transactional(function () {
+                return false;
+            });
+
+            return false;
+        });
+        $this->assertFalse($this->connection->inTransaction());
+    }
+
+    /**
+     * Tests that not allowed nesting of commit/rollback operations throws
+     * a NestedTransactionRollbackException.
+     *
+     * @return void
+     */
+    public function testNestedTransactionRollbackExceptionThrown()
+    {
+        $this->rollbackSourceLine = -1;
+
+        $e = null;
+        try {
+            $this->connection->transactional(function () {
+                $this->connection->transactional(function () {
+                    return false;
+                });
+                $this->rollbackSourceLine = __LINE__ - 1;
+
+                return true;
+            });
+
+            $this->fail('NestedTransactionRollbackException should be thrown');
+        } catch (NestedTransactionRollbackException $e) {
+        }
+
+        $trace = $e->getTrace();
+        $this->assertEquals(__FILE__, $trace[1]['file']);
+        $this->assertEquals($this->rollbackSourceLine, $trace[1]['line']);
+    }
+
+    /**
+     * Tests more detail about that not allowed nesting of rollback/commit
+     * operations throws a NestedTransactionRollbackException.
+     *
+     * @return void
+     */
+    public function testNestedTransactionStates()
+    {
+        $this->rollbackSourceLine = -1;
+        $this->nestedTransactionStates = [];
+
+        $e = null;
+        try {
+            $this->connection->transactional(function () {
+                $this->pushNestedTransactionState();
+
+                $this->connection->transactional(function () {
+                    return true;
+                });
+
+                $this->connection->transactional(function () {
+                    $this->pushNestedTransactionState();
+
+                    $this->connection->transactional(function () {
+                        return false;
+                    });
+                    $this->rollbackSourceLine = __LINE__ - 1;
+
+                    $this->pushNestedTransactionState();
+
+                    return true;
+                });
+
+                $this->connection->transactional(function () {
+                    return false;
+                });
+
+                $this->pushNestedTransactionState();
+
+                return true;
+            });
+
+            $this->fail('NestedTransactionRollbackException should be thrown');
+        } catch (NestedTransactionRollbackException $e) {
+        }
+
+        $this->pushNestedTransactionState();
+
+        $this->assertSame([false, false, true, true, false], $this->nestedTransactionStates);
+        $this->assertFalse($this->connection->inTransaction());
+
+        $trace = $e->getTrace();
+        $this->assertEquals(__FILE__, $trace[1]['file']);
+        $this->assertEquals($this->rollbackSourceLine, $trace[1]['line']);
+    }
+
+    /**
+     * Helper method to trace nested transaction states.
+     *
+     * @return void
+     */
+    public function pushNestedTransactionState()
+    {
+        $method = new ReflectionMethod($this->connection, 'wasNestedTransactionRolledback');
+        $method->setAccessible(true);
+        $this->nestedTransactionStates[] = $method->invoke($this->connection);
     }
 }

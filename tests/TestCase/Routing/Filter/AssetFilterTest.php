@@ -13,12 +13,9 @@
  */
 namespace Cake\Test\TestCase\Routing\Filter;
 
-use Cake\Core\App;
-use Cake\Core\Configure;
 use Cake\Core\Plugin;
 use Cake\Event\Event;
-use Cake\Network\Request;
-use Cake\Network\Response;
+use Cake\Http\ServerRequest;
 use Cake\Routing\Filter\AssetFilter;
 use Cake\TestSuite\TestCase;
 
@@ -64,8 +61,10 @@ class AssetFilterTest extends TestCase
         $time = filemtime(Plugin::path('TestTheme') . 'webroot/img/cake.power.gif');
         $time = new \DateTime('@' . $time);
 
-        $response = $this->getMock('Cake\Network\Response', ['send', 'checkNotModified']);
-        $request = new Request('test_theme/img/cake.power.gif');
+        $response = $this->getMockBuilder('Cake\Http\Response')
+            ->setMethods(['send', 'checkNotModified'])
+            ->getMock();
+        $request = new ServerRequest('test_theme/img/cake.power.gif');
 
         $response->expects($this->once())->method('checkNotModified')
             ->with($request)
@@ -78,8 +77,10 @@ class AssetFilterTest extends TestCase
         $this->assertEquals(200, $response->statusCode());
         $this->assertEquals($time->format('D, j M Y H:i:s') . ' GMT', $response->modified());
 
-        $response = $this->getMock('Cake\Network\Response', ['_sendHeader', 'checkNotModified']);
-        $request = new Request('test_theme/img/cake.power.gif');
+        $response = $this->getMockBuilder('Cake\Http\Response')
+            ->setMethods(['_sendHeader', 'checkNotModified', 'send'])
+            ->getMock();
+        $request = new ServerRequest('test_theme/img/cake.power.gif');
 
         $response->expects($this->once())->method('checkNotModified')
             ->with($request)
@@ -101,8 +102,10 @@ class AssetFilterTest extends TestCase
     {
         $filter = new AssetFilter();
 
-        $response = $this->getMock('Response', ['_sendHeader']);
-        $request = new Request('//index.php');
+        $response = $this->getMockBuilder('Cake\Http\Response')
+            ->setMethods(['_sendHeader'])
+            ->getMock();
+        $request = new ServerRequest('//index.php');
         $event = new Event('Dispatcher.beforeRequest', $this, compact('request', 'response'));
 
         $this->assertNull($filter->beforeDispatch($event));
@@ -112,7 +115,7 @@ class AssetFilterTest extends TestCase
     /**
      * Test that 404's are returned when .. is in the URL
      *
-     * @return voi
+     * @return void
      * @triggers Dispatcher.beforeRequest $this, compact('request', 'response')
      * @triggers Dispatcher.beforeRequest $this, compact('request', 'response')
      */
@@ -120,14 +123,16 @@ class AssetFilterTest extends TestCase
     {
         $filter = new AssetFilter();
 
-        $response = $this->getMock('Response', ['_sendHeader']);
-        $request = new Request('test_theme/../webroot/css/test_asset.css');
+        $response = $this->getMockBuilder('Cake\Http\Response')
+            ->setMethods(['_sendHeader'])
+            ->getMock();
+        $request = new ServerRequest('test_theme/../webroot/css/test_asset.css');
         $event = new Event('Dispatcher.beforeRequest', $this, compact('request', 'response'));
 
         $this->assertNull($filter->beforeDispatch($event));
         $this->assertFalse($event->isStopped());
 
-        $request = new Request('test_theme/%3e./webroot/css/test_asset.css');
+        $request = new ServerRequest('test_theme/%3e./webroot/css/test_asset.css');
         $event = new Event('Dispatcher.beforeRequest', $this, compact('request', 'response'));
 
         $this->assertNull($filter->beforeDispatch($event));
@@ -234,18 +239,18 @@ class AssetFilterTest extends TestCase
         Plugin::load(['Company/TestPluginThree', 'TestPlugin', 'PluginJs']);
 
         $filter = new AssetFilter();
-        $response = $this->getMock('Cake\Network\Response', ['_sendHeader']);
-        $request = new Request($url);
+        $response = $this->getMockBuilder('Cake\Http\Response')
+            ->setMethods(['_sendHeader'])
+            ->getMock();
+        $request = new ServerRequest($url);
         $event = new Event('Dispatcher.beforeDispatch', $this, compact('request', 'response'));
 
-        ob_start();
-        $filter->beforeDispatch($event);
-        $result = ob_get_contents();
-        ob_end_clean();
+        $response = $filter->beforeDispatch($event);
+        $result = $response->getFile();
 
         $path = TEST_APP . str_replace('/', DS, $file);
         $file = file_get_contents($path);
-        $this->assertEquals($file, $result);
+        $this->assertEquals($file, $result->read());
 
         $expected = filesize($path);
         $headers = $response->header();

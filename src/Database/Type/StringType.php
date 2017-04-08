@@ -16,6 +16,7 @@ namespace Cake\Database\Type;
 
 use Cake\Database\Driver;
 use Cake\Database\Type;
+use Cake\Database\TypeInterface;
 use InvalidArgumentException;
 use PDO;
 
@@ -24,14 +25,14 @@ use PDO;
  *
  * Use to convert string data between PHP and the database types.
  */
-class StringType extends Type
+class StringType extends Type implements OptionalConvertInterface, TypeInterface
 {
 
     /**
      * Convert string data into the database format.
      *
      * @param mixed $value The value to convert.
-     * @param Driver $driver The driver instance to convert with.
+     * @param \Cake\Database\Driver $driver The driver instance to convert with.
      * @return string|null
      */
     public function toDatabase($value, Driver $driver)
@@ -52,10 +53,10 @@ class StringType extends Type
     }
 
     /**
-     * Convert string values to PHP integers
+     * Convert string values to PHP strings.
      *
      * @param mixed $value The value to convert.
-     * @param Driver $driver The driver instance to convert with.
+     * @param \Cake\Database\Driver $driver The driver instance to convert with.
      * @return string|null
      */
     public function toPHP($value, Driver $driver)
@@ -63,6 +64,7 @@ class StringType extends Type
         if ($value === null) {
             return null;
         }
+
         return (string)$value;
     }
 
@@ -70,7 +72,7 @@ class StringType extends Type
      * Get the correct PDO binding type for string data.
      *
      * @param mixed $value The value being bound.
-     * @param Driver $driver The driver.
+     * @param \Cake\Database\Driver $driver The driver.
      * @return int
      */
     public function toStatement($value, Driver $driver)
@@ -82,7 +84,7 @@ class StringType extends Type
      * Marshalls request data into PHP strings.
      *
      * @param mixed $value The value to convert.
-     * @return mixed Converted value.
+     * @return string|null Converted value.
      */
     public function marshal($value)
     {
@@ -92,6 +94,17 @@ class StringType extends Type
         if (is_array($value)) {
             return '';
         }
+
         return (string)$value;
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @return boolean False as database results are returned already as strings
+     */
+    public function requiresToPhpCast()
+    {
+        return false;
     }
 }

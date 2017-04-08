@@ -70,7 +70,7 @@ class MessagesFileLoader
      * $package = $loader();
      * ```
      *
-     * Load and parse  src/Locale/fr_FR/validation.mo
+     * Load and parse src/Locale/fr_FR/validation.mo
      *
      * ```
      * $loader = new MessagesFileLoader('validation', 'fr_FR', 'mo');
@@ -130,7 +130,7 @@ class MessagesFileLoader
         }
 
         $name = ucfirst($ext);
-        $class = App::classname($name, 'I18n\Parser', 'FileParser');
+        $class = App::className($name, 'I18n\Parser', 'FileParser');
 
         if (!$class) {
             throw new RuntimeException(sprintf('Could not find class %s', "{$name}FileParser"));
@@ -138,6 +138,7 @@ class MessagesFileLoader
 
         $messages = (new $class)->parse($file);
         $package->setMessages($messages);
+
         return $package;
     }
 
@@ -159,21 +160,21 @@ class MessagesFileLoader
         $searchPaths = [];
 
         $localePaths = App::path('Locale');
-        if (empty($localePaths)) {
-            $localePaths[] = APP . 'Locale' . DS;
+        if (empty($localePaths) && defined('APP')) {
+            $localePaths[] = APP . 'Locale' . DIRECTORY_SEPARATOR;
         }
         foreach ($localePaths as $path) {
             foreach ($folders as $folder) {
-                $searchPaths[] = $path . $folder . DS;
+                $searchPaths[] = $path . $folder . DIRECTORY_SEPARATOR;
             }
         }
 
         // If space is not added after slash, the character after it remains lowercased
         $pluginName = Inflector::camelize(str_replace('/', '/ ', $this->_name));
         if (Plugin::loaded($pluginName)) {
-            $basePath = Plugin::classPath($pluginName) . 'Locale' . DS;
+            $basePath = Plugin::classPath($pluginName) . 'Locale' . DIRECTORY_SEPARATOR;
             foreach ($folders as $folder) {
-                $searchPaths[] = $basePath . $folder . DS;
+                $searchPaths[] = $basePath . $folder . DIRECTORY_SEPARATOR;
             }
         }
 

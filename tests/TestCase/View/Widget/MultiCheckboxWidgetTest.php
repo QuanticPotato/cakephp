@@ -37,9 +37,11 @@ class MultiCheckboxWidgetTest extends TestCase
             'checkbox' => '<input type="checkbox" name="{{name}}" value="{{value}}"{{attrs}}>',
             'label' => '<label{{attrs}}>{{text}}</label>',
             'checkboxWrapper' => '<div class="checkbox">{{input}}{{label}}</div>',
+            'multicheckboxWrapper' => '<fieldset{{attrs}}>{{content}}</fieldset>',
+            'multicheckboxTitle' => '<legend>{{text}}</legend>',
         ];
         $this->templates = new StringTemplate($templates);
-        $this->context = $this->getMock('Cake\View\Form\ContextInterface');
+        $this->context = $this->getMockBuilder('Cake\View\Form\ContextInterface')->getMock();
     }
 
     /**
@@ -363,6 +365,177 @@ class MultiCheckboxWidgetTest extends TestCase
             'Development default',
             '/label',
             '/div',
+        ];
+        $this->assertHtml($expected, $result);
+    }
+
+    /**
+     * Test render with groupings.
+     *
+     * @return void
+     */
+    public function testRenderGrouped()
+    {
+        $label = new LabelWidget($this->templates);
+        $input = new MultiCheckboxWidget($this->templates, $label);
+        $data = [
+            'name' => 'Tags[id]',
+            'options' => [
+                'Group 1' => [
+                    1 => 'CakePHP',
+                ],
+                'Group 2' => [
+                    2 => 'Development',
+                ]
+            ]
+        ];
+        $result = $input->render($data, $this->context);
+        $expected = [
+            '<fieldset',
+            '<legend', 'Group 1', '/legend',
+            ['div' => ['class' => 'checkbox']],
+            ['input' => [
+                'type' => 'checkbox',
+                'name' => 'Tags[id][]',
+                'value' => 1,
+                'id' => 'tags-id-1',
+            ]],
+            ['label' => ['for' => 'tags-id-1']],
+            'CakePHP',
+            '/label',
+            '/div',
+            '/fieldset',
+
+            '<fieldset',
+            '<legend', 'Group 2', '/legend',
+            ['div' => ['class' => 'checkbox']],
+            ['input' => [
+                'type' => 'checkbox',
+                'name' => 'Tags[id][]',
+                'value' => 2,
+                'id' => 'tags-id-2',
+            ]],
+            ['label' => ['for' => 'tags-id-2']],
+            'Development',
+            '/label',
+            '/div',
+            '/fieldset',
+        ];
+        $this->assertHtml($expected, $result);
+    }
+
+    /**
+     * Test render with partial groupings.
+     *
+     * @return void
+     */
+    public function testRenderPartialGrouped()
+    {
+        $label = new LabelWidget($this->templates);
+        $input = new MultiCheckboxWidget($this->templates, $label);
+        $data = [
+            'name' => 'Tags[id]',
+            'options' => [
+                1 => 'PHP',
+                'Group 1' => [
+                    2 => 'CakePHP',
+                ],
+                3 => 'Development',
+            ]
+        ];
+        $result = $input->render($data, $this->context);
+        $expected = [
+            ['div' => ['class' => 'checkbox']],
+            ['input' => [
+                'type' => 'checkbox',
+                'name' => 'Tags[id][]',
+                'value' => 1,
+                'id' => 'tags-id-1',
+            ]],
+            ['label' => ['for' => 'tags-id-1']],
+            'PHP',
+            '/label',
+            '/div',
+
+            '<fieldset',
+            '<legend', 'Group 1', '/legend',
+            ['div' => ['class' => 'checkbox']],
+            ['input' => [
+                'type' => 'checkbox',
+                'name' => 'Tags[id][]',
+                'value' => 2,
+                'id' => 'tags-id-2',
+            ]],
+            ['label' => ['for' => 'tags-id-2']],
+            'CakePHP',
+            '/label',
+            '/div',
+            '/fieldset',
+
+            ['div' => ['class' => 'checkbox']],
+            ['input' => [
+                'type' => 'checkbox',
+                'name' => 'Tags[id][]',
+                'value' => 3,
+                'id' => 'tags-id-3',
+            ]],
+            ['label' => ['for' => 'tags-id-3']],
+            'Development',
+            '/label',
+            '/div',
+        ];
+        $this->assertHtml($expected, $result);
+    }
+
+    /**
+     * testRenderCustomAttributes method
+     *
+     * Test render with custom attributes
+     *
+     * @return void
+     */
+    public function testRenderCustomAttributes()
+    {
+        $label = new LabelWidget($this->templates);
+        $input = new MultiCheckboxWidget($this->templates, $label);
+        $result = $input->render([
+            'name' => 'category',
+            'options' => ['1', '2'],
+            'class' => 'my-class',
+            'data-ref' => 'custom-attr',
+        ], $this->context);
+        $expected = [
+            ['div' => ['class' => 'checkbox']],
+            [
+                'input' => [
+                    'type' => 'checkbox',
+                    'name' => 'category[]',
+                    'value' => '0',
+                    'id' => 'category-0',
+                    'class' => 'my-class',
+                    'data-ref' => 'custom-attr'
+                ]
+            ],
+            ['label' => ['for' => 'category-0']],
+            '1',
+            '/label',
+            '/div',
+
+            ['div' => ['class' => 'checkbox']],
+            [
+                'input' => [
+                    'type' => 'checkbox',
+                    'name' => 'category[]',
+                    'value' => '1',
+                    'id' => 'category-1',
+                    'class' => 'my-class',
+                    'data-ref' => 'custom-attr'
+                ]
+            ],
+            ['label' => ['for' => 'category-1']],
+            '2',
+            '/label',
+            '/div'
         ];
         $this->assertHtml($expected, $result);
     }

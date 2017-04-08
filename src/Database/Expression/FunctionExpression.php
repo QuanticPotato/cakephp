@@ -15,6 +15,9 @@
 namespace Cake\Database\Expression;
 
 use Cake\Database\ExpressionInterface;
+use Cake\Database\TypedResultInterface;
+use Cake\Database\TypedResultTrait;
+use Cake\Database\Type\ExpressionTypeCasterTrait;
 use Cake\Database\ValueBinder;
 
 /**
@@ -22,11 +25,12 @@ use Cake\Database\ValueBinder;
  * constructed by passing the name of the function and a list of params.
  * For security reasons, all params passed are quoted by default unless
  * explicitly told otherwise.
- *
- * @internal
  */
-class FunctionExpression extends QueryExpression
+class FunctionExpression extends QueryExpression implements TypedResultInterface
 {
+
+    use ExpressionTypeCasterTrait;
+    use TypedResultTrait;
 
     /**
      * The name of the function to be constructed when generating the SQL string
@@ -45,40 +49,66 @@ class FunctionExpression extends QueryExpression
      *
      * ### Examples:
      *
-     *  ``$f = new FunctionExpression('CONCAT', ['CakePHP', ' rules']);``
+     * `$f = new FunctionExpression('CONCAT', ['CakePHP', ' rules']);`
      *
-     * Previous line will generate ``CONCAT('CakePHP', ' rules')``
+     * Previous line will generate `CONCAT('CakePHP', ' rules')`
      *
-     * ``$f = new FunctionExpression('CONCAT', ['name' => 'literal', ' rules']);``
+     * `$f = new FunctionExpression('CONCAT', ['name' => 'literal', ' rules']);`
      *
-     * Will produce ``CONCAT(name, ' rules')``
+     * Will produce `CONCAT(name, ' rules')`
      *
      * @param string $name the name of the function to be constructed
      * @param array $params list of arguments to be passed to the function
      * If associative the key would be used as argument when value is 'literal'
      * @param array $types associative array of types to be associated with the
      * passed arguments
+     * @param string $returnType The return type of this expression
      */
-    public function __construct($name, $params = [], $types = [])
+    public function __construct($name, $params = [], $types = [], $returnType = 'string')
     {
         $this->_name = $name;
+        $this->_returnType = $returnType;
         parent::__construct($params, $types, ',');
+    }
+
+    /**
+     * Sets the name of the SQL function to be invoke in this expression.
+     *
+     * @param string $name The name of the function
+     * @return $this
+     */
+    public function setName($name)
+    {
+        $this->_name = $name;
+
+        return $this;
+    }
+
+    /**
+     * Gets the name of the SQL function to be invoke in this expression.
+     *
+     * @return string
+     */
+    public function getName()
+    {
+        return $this->_name;
     }
 
     /**
      * Sets the name of the SQL function to be invoke in this expression,
      * if no value is passed it will return current name
      *
-     * @param string $name The name of the function
+     * @deprecated 3.4.0 Use setName()/getName() instead.
+     * @param string|null $name The name of the function
      * @return string|$this
      */
     public function name($name = null)
     {
-        if ($name === null) {
-            return $this->_name;
+        if ($name !== null) {
+            return $this->setName($name);
         }
-        $this->_name = $name;
-        return $this;
+
+        return $this->getName();
     }
 
     /**
@@ -89,24 +119,36 @@ class FunctionExpression extends QueryExpression
      * @param array $types associative array of types to be associated with the
      * passed arguments
      * @param bool $prepend Whether to prepend or append to the list of arguments
-     * @see FunctionExpression::__construct() for more details.
+     * @see \Cake\Database\Expression\FunctionExpression::__construct() for more details.
      * @return $this
      */
     public function add($params, $types = [], $prepend = false)
     {
         $put = $prepend ? 'array_unshift' : 'array_push';
-        $typeMap = $this->typeMap()->types($types);
+        $typeMap = $this->getTypeMap()->setTypes($types);
         foreach ($params as $k => $p) {
             if ($p === 'literal') {
                 $put($this->_conditions, $k);
                 continue;
             }
 
+            if ($p === 'identifier') {
+                $put($this->_conditions, new IdentifierExpression($k));
+                continue;
+            }
+
+            $type = $typeMap->type($k);
+
+            if ($type !== null && !$p instanceof ExpressionInterface) {
+                $p = $this->_castToExpression($p, $type);
+            }
+
             if ($p instanceof ExpressionInterface) {
                 $put($this->_conditions, $p);
                 continue;
             }
-            $put($this->_conditions, ['value' => $p, 'type' => $typeMap->type($k)]);
+
+            $put($this->_conditions, ['value' => $p, 'type' => $type]);
         }
 
         return $this;
@@ -134,9 +176,21 @@ class FunctionExpression extends QueryExpression
             }
             $parts[] = $condition;
         }
+
         return $this->_name . sprintf('(%s)', implode(
             $this->_conjunction . ' ',
             $parts
         ));
+    }
+
+    /**
+     * The name of the function is in itself an expression to generate, thus
+     * always adding 1 to the amount of expressions stored in this object.
+     *
+     * @return int
+     */
+    public function count()
+    {
+        return 1 + count($this->_conditions);
     }
 }

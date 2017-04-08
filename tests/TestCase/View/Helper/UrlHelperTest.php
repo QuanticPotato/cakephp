@@ -16,7 +16,7 @@ namespace Cake\Test\TestCase\View;
 
 use Cake\Core\Configure;
 use Cake\Core\Plugin;
-use Cake\Network\Request;
+use Cake\Http\ServerRequest;
 use Cake\Routing\Router;
 use Cake\TestSuite\TestCase;
 use Cake\View\Helper\UrlHelper;
@@ -24,10 +24,14 @@ use Cake\View\View;
 
 /**
  * UrlHelperTest class
- *
  */
 class UrlHelperTest extends TestCase
 {
+
+    /**
+     * @var \Cake\View\Helper\UrlHelper
+     */
+    public $Helper;
 
     /**
      * setUp method
@@ -41,7 +45,7 @@ class UrlHelperTest extends TestCase
         Router::reload();
         $this->View = new View();
         $this->Helper = new UrlHelper($this->View);
-        $this->Helper->request = new Request();
+        $this->Helper->request = new ServerRequest();
 
         Configure::write('App.namespace', 'TestApp');
         Plugin::load(['TestTheme']);
@@ -97,7 +101,27 @@ class UrlHelperTest extends TestCase
             'controller' => 'posts', 'action' => 'index', 'page' => '1',
             '?' => ['one' => 'value', 'two' => 'value', 'three' => 'purple']
         ]);
-        $this->assertEquals("/posts/index?page=1&amp;one=value&amp;two=value&amp;three=purple", $result);
+        $this->assertEquals("/posts/index?one=value&amp;two=value&amp;three=purple&amp;page=1", $result);
+    }
+
+    /**
+     * @return void
+     */
+    public function testUrlConversionUnescaped()
+    {
+        $result = $this->Helper->build('/controller/action/1?one=1&two=2', ['escape' => false]);
+        $this->assertEquals('/controller/action/1?one=1&two=2', $result);
+
+        $result = $this->Helper->build([
+            'controller' => 'posts',
+            'action' => 'view',
+            'param' => '%7Baround%20here%7D%5Bthings%5D%5Bare%5D%24%24',
+            '?' => [
+                'k' => 'v',
+                '1' => '2'
+            ]
+        ], ['escape' => false]);
+        $this->assertEquals("/posts/view?k=v&1=2&param=%257Baround%2520here%257D%255Bthings%255D%255Bare%255D%2524%2524", $result);
     }
 
     /**
@@ -249,6 +273,67 @@ class UrlHelperTest extends TestCase
 
         $result = $this->Helper->assetTimestamp('/test_theme/js/non_existant.js');
         $this->assertRegExp('#/test_theme/js/non_existant.js\?$#', $result, 'No error on missing file');
+    }
+
+    /**
+     * test script()
+     *
+     * @return void
+     */
+    public function testScript()
+    {
+        Router::connect('/:controller/:action/*');
+
+        $this->Helper->webroot = '';
+        $result = $this->Helper->script(
+            [
+                'controller' => 'js',
+                'action' => 'post',
+                '_ext' => 'js'
+            ],
+            ['fullBase' => true]
+        );
+        $this->assertEquals(Router::fullBaseUrl() . '/js/post.js', $result);
+    }
+
+    /**
+     * test image()
+     *
+     * @return void
+     */
+    public function testImage()
+    {
+        $result = $this->Helper->image('foo.jpg');
+        $this->assertEquals('img/foo.jpg', $result);
+
+        $result = $this->Helper->image('foo.jpg', ['fullBase' => true]);
+        $this->assertEquals(Router::fullBaseUrl() . '/img/foo.jpg', $result);
+
+        $result = $this->Helper->image('dir/sub dir/my image.jpg');
+        $this->assertEquals('img/dir/sub%20dir/my%20image.jpg', $result);
+
+        $result = $this->Helper->image('foo.jpg?one=two&three=four');
+        $this->assertEquals('img/foo.jpg?one=two&amp;three=four', $result);
+
+        $result = $this->Helper->image('dir/big+tall/image.jpg');
+        $this->assertEquals('img/dir/big%2Btall/image.jpg', $result);
+
+        $result = $this->Helper->image('cid:foo.jpg');
+        $this->assertEquals('cid:foo.jpg', $result);
+
+        $result = $this->Helper->image('CID:foo.jpg');
+        $this->assertEquals('CID:foo.jpg', $result);
+    }
+
+    /**
+     * test css
+     *
+     * @return void
+     */
+    public function testCss()
+    {
+        $result = $this->Helper->css('style');
+        $this->assertEquals('css/style.css', $result);
     }
 
     /**

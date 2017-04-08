@@ -36,7 +36,6 @@ class MyUsersTable extends Table
     protected $_table = 'users';
 }
 
-
 /**
  * Test case for TableLocator
  */
@@ -49,7 +48,6 @@ class TableLocatorTest extends TestCase
      * @var \Cake\ORM\Locator\TableLocator
      */
     protected $_locator;
-
 
     /**
      * setup
@@ -170,7 +168,7 @@ class TableLocatorTest extends TestCase
     }
 
     /**
-     * Are auto-models instanciated correctly? How about when they have an alias?
+     * Are auto-models instantiated correctly? How about when they have an alias?
      *
      * @return void
      */
@@ -219,6 +217,21 @@ class TableLocatorTest extends TestCase
         ]);
         $result = $this->_locator->get('Articles');
         $this->assertEquals('my_articles', $result->table(), 'Should use config() data.');
+    }
+
+    /**
+     * Test that get() uses config data set with config()
+     *
+     * @return void
+     */
+    public function testGetWithConnectionName()
+    {
+        ConnectionManager::alias('test', 'testing');
+        $result = $this->_locator->get('Articles', [
+            'connectionName' => 'testing'
+        ]);
+        $this->assertEquals('articles', $result->table());
+        $this->assertEquals('test', $result->connection()->configName());
     }
 
     /**
@@ -462,7 +475,7 @@ class TableLocatorTest extends TestCase
      */
     public function testSet()
     {
-        $mock = $this->getMock('Cake\ORM\Table');
+        $mock = $this->getMockBuilder('Cake\ORM\Table')->getMock();
         $this->assertSame($mock, $this->_locator->set('Articles', $mock));
         $this->assertSame($mock, $this->_locator->get('Articles'));
     }
@@ -476,7 +489,7 @@ class TableLocatorTest extends TestCase
     {
         Plugin::load('TestPlugin');
 
-        $mock = $this->getMock('TestPlugin\Model\Table\CommentsTable');
+        $mock = $this->getMockBuilder('TestPlugin\Model\Table\CommentsTable')->getMock();
 
         $this->assertSame($mock, $this->_locator->set('TestPlugin.Comments', $mock));
         $this->assertSame($mock, $this->_locator->get('TestPlugin.Comments'));

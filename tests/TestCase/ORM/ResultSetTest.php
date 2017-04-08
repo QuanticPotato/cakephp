@@ -14,11 +14,10 @@
  */
 namespace Cake\Test\TestCase\ORM;
 
-use Cake\Core\Configure;
 use Cake\Core\Plugin;
+use Cake\Database\Exception;
 use Cake\Datasource\ConnectionManager;
 use Cake\ORM\Entity;
-use Cake\ORM\Query;
 use Cake\ORM\ResultSet;
 use Cake\ORM\Table;
 use Cake\ORM\TableRegistry;
@@ -85,7 +84,7 @@ class ResultSetTest extends TestCase
         foreach ($results as $result) {
             $first[] = $result;
         }
-        $this->setExpectedException('Cake\Database\Exception');
+        $this->expectException(Exception::class);
         foreach ($results as $result) {
             $second[] = $result;
         }
@@ -140,7 +139,7 @@ class ResultSetTest extends TestCase
 
         // Use a loop to test Iterator implementation
         foreach ($results as $i => $row) {
-            $expected = new \Cake\ORM\Entity($this->fixtureData[$i]);
+            $expected = new Entity($this->fixtureData[$i]);
             $expected->isNew(false);
             $expected->source($this->table->alias());
             $expected->clean();
@@ -260,7 +259,6 @@ class ResultSetTest extends TestCase
         $query = $this->table->find('all');
         $results = $query->all();
         $expected = [
-            'query' => $query,
             'items' => $results->toArray()
         ];
         $this->assertSame($expected, $results->__debugInfo());
@@ -271,7 +269,7 @@ class ResultSetTest extends TestCase
      *
      * @return void
      */
-    public function testBelongsToEagerLoaderLeavesEmptyAssocation()
+    public function testBelongsToEagerLoaderLeavesEmptyAssociation()
     {
         $comments = TableRegistry::get('Comments');
         $comments->belongsTo('Articles');
@@ -294,11 +292,44 @@ class ResultSetTest extends TestCase
     }
 
     /**
+     * Test showing associated record is preserved when selecting only field with
+     * null value if auto fields is disabled.
+     *
+     * @return void
+     */
+    public function testBelongsToEagerLoaderWithAutoFieldsFalse()
+    {
+        $authors = TableRegistry::get('Authors');
+
+        $author = $authors->newEntity(['name' => null]);
+        $authors->save($author);
+
+        $articles = TableRegistry::get('Articles');
+        $articles->belongsTo('Authors');
+
+        $article = $articles->newEntity([
+            'author_id' => $author->id,
+            'title' => 'article with author with null name'
+        ]);
+        $articles->save($article);
+
+        $result = $articles->find()
+            ->select(['Articles.id', 'Articles.title', 'Authors.name'])
+            ->contain(['Authors'])
+            ->where(['Articles.id' => $article->id])
+            ->autoFields(false)
+            ->hydrate(false)
+            ->first();
+
+        $this->assertNotNull($result['author']);
+    }
+
+    /**
      * Test that eagerLoader leaves empty associations unpopulated.
      *
      * @return void
      */
-    public function testHasOneEagerLoaderLeavesEmptyAssocation()
+    public function testHasOneEagerLoaderLeavesEmptyAssociation()
     {
         $this->table->hasOne('Comments');
 
@@ -333,7 +364,7 @@ class ResultSetTest extends TestCase
         $query->autoFields(false);
 
         $row = ['Other__field' => 'test'];
-        $statement = $this->getMock('Cake\Database\StatementInterface');
+        $statement = $this->getMockBuilder('Cake\Database\StatementInterface')->getMock();
         $statement->method('fetch')
             ->will($this->onConsecutiveCalls($row, $row));
         $statement->method('rowCount')
@@ -342,7 +373,7 @@ class ResultSetTest extends TestCase
         $result = new ResultSet($query, $statement);
 
         $result->valid();
-        $data = $result->current();
+        $this->assertNotEmpty($result->current());
     }
 
     /**
@@ -367,5 +398,23 @@ class ResultSetTest extends TestCase
         })->first();
         $this->assertEquals('TestPlugin.Comments', $result->source());
         $this->assertEquals('TestPlugin.Authors', $result->_matchingData['Authors']->source());
+    }
+
+    /**
+     * Ensure that isEmpty() on a ResultSet doesn't result in loss
+     * of records. This behavior is provided by CollectionTrait.
+     *
+     * @return void
+     */
+    public function testIsEmptyDoesNotConsumeData()
+    {
+        $table = TableRegistry::get('Comments');
+        $query = $table->find()
+            ->formatResults(function ($results) {
+                return $results;
+            });
+        $res = $query->all();
+        $res->isEmpty();
+        $this->assertCount(6, $res->toArray());
     }
 }

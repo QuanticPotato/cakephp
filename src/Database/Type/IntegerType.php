@@ -16,6 +16,7 @@ namespace Cake\Database\Type;
 
 use Cake\Database\Driver;
 use Cake\Database\Type;
+use Cake\Database\TypeInterface;
 use InvalidArgumentException;
 use PDO;
 
@@ -24,15 +25,37 @@ use PDO;
  *
  * Use to convert integer data between PHP and the database types.
  */
-class IntegerType extends Type
+class IntegerType extends Type implements TypeInterface
 {
+    /**
+     * Identifier name for this type.
+     *
+     * (This property is declared here again so that the inheritance from
+     * Cake\Database\Type can be removed in the future.)
+     *
+     * @var string|null
+     */
+    protected $_name = null;
+
+    /**
+     * Constructor.
+     *
+     * (This method is declared here again so that the inheritance from
+     * Cake\Database\Type can be removed in the future.)
+     *
+     * @param string|null $name The name identifying this type
+     */
+    public function __construct($name = null)
+    {
+        $this->_name = $name;
+    }
 
     /**
      * Convert integer data into the database format.
      *
      * @param mixed $value The value to convert.
-     * @param Driver $driver The driver instance to convert with.
-     * @return int
+     * @param \Cake\Database\Driver $driver The driver instance to convert with.
+     * @return int|null
      */
     public function toDatabase($value, Driver $driver)
     {
@@ -51,14 +74,15 @@ class IntegerType extends Type
      * Convert integer values to PHP integers
      *
      * @param mixed $value The value to convert.
-     * @param Driver $driver The driver instance to convert with.
-     * @return int
+     * @param \Cake\Database\Driver $driver The driver instance to convert with.
+     * @return int|null
      */
     public function toPHP($value, Driver $driver)
     {
         if ($value === null) {
             return null;
         }
+
         return (int)$value;
     }
 
@@ -66,7 +90,7 @@ class IntegerType extends Type
      * Get the correct PDO binding type for integer data.
      *
      * @param mixed $value The value being bound.
-     * @param Driver $driver The driver.
+     * @param \Cake\Database\Driver $driver The driver.
      * @return int
      */
     public function toStatement($value, Driver $driver)
@@ -78,22 +102,20 @@ class IntegerType extends Type
      * Marshalls request data into PHP floats.
      *
      * @param mixed $value The value to convert.
-     * @return mixed Converted value.
+     * @return int|null Converted value.
      */
     public function marshal($value)
     {
         if ($value === null || $value === '') {
             return null;
         }
-        if (is_int($value)) {
-            return $value;
-        }
-        if (ctype_digit($value)) {
+        if (is_numeric($value) || ctype_digit($value)) {
             return (int)$value;
         }
         if (is_array($value)) {
             return 1;
         }
-        return $value;
+
+        return null;
     }
 }

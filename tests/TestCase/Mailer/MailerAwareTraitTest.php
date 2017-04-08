@@ -23,7 +23,9 @@ use Cake\TestSuite\TestCase;
 class Stub
 {
 
-    use MailerAwareTrait;
+    use MailerAwareTrait {
+        getMailer as public;
+    }
 }
 
 /**
@@ -49,7 +51,7 @@ class MailerAwareTraitTest extends TestCase
     /**
      * Test exception thrown by getMailer.
      *
-     * @expectedException Cake\Mailer\Exception\MissingMailerException
+     * @expectedException \Cake\Mailer\Exception\MissingMailerException
      * @expectedExceptionMessage Mailer class "Test" could not be found.
      */
     public function testGetMailerThrowsException()

@@ -14,15 +14,12 @@
  */
 namespace Cake\View;
 
-use BadMethodCallException;
 use Cake\Core\App;
 use Cake\Utility\Inflector;
-use ReflectionException;
-use ReflectionMethod;
+use Cake\View\Exception\MissingCellException;
 
 /**
  * Provides cell() method for usage in Controller and View classes.
- *
  */
 trait CellTrait
 {
@@ -58,7 +55,7 @@ trait CellTrait
      * @throws \Cake\View\Exception\MissingCellException If Cell class was not found.
      * @throws \BadMethodCallException If Cell class does not specified cell action.
      */
-    public function cell($cell, array $data = [], array $options = [])
+    protected function cell($cell, array $data = [], array $options = [])
     {
         $parts = explode('::', $cell);
 
@@ -72,25 +69,16 @@ trait CellTrait
         $className = App::className($pluginAndCell, 'View/Cell', 'Cell');
 
         if (!$className) {
-            throw new Exception\MissingCellException(['className' => $pluginAndCell . 'Cell']);
+            throw new MissingCellException(['className' => $pluginAndCell . 'Cell']);
         }
 
-        $cell = $this->_createCell($className, $action, $plugin, $options);
         if (!empty($data)) {
             $data = array_values($data);
         }
+        $options = ['action' => $action, 'args' => $data] + $options;
+        $cell = $this->_createCell($className, $action, $plugin, $options);
 
-        try {
-            $reflect = new ReflectionMethod($cell, $action);
-            $reflect->invokeArgs($cell, $data);
-            return $cell;
-        } catch (ReflectionException $e) {
-            throw new BadMethodCallException(sprintf(
-                'Class %s does not have a "%s" method.',
-                $className,
-                $action
-            ));
-        }
+        return $cell;
     }
 
     /**
@@ -100,41 +88,44 @@ trait CellTrait
      * @param string $action The action name.
      * @param string $plugin The plugin name.
      * @param array $options The constructor options for the cell.
-     * @return \Cake\View\Cell;
+     * @return \Cake\View\Cell
      */
     protected function _createCell($className, $action, $plugin, $options)
     {
+        /* @var \Cake\View\Cell $instance */
         $instance = new $className($this->request, $this->response, $this->eventManager(), $options);
         $instance->template = Inflector::underscore($action);
 
         $builder = $instance->viewBuilder();
         if (!empty($plugin)) {
-            $builder->plugin($plugin);
+            $builder->setPlugin($plugin);
         }
         if (!empty($this->helpers)) {
-            $builder->helpers($this->helpers);
+            $builder->setHelpers($this->helpers);
             $instance->helpers = $this->helpers;
         }
 
         if ($this instanceof View) {
             if (!empty($this->theme)) {
-                $builder->theme($this->theme);
+                $builder->setTheme($this->theme);
             }
 
             $class = get_class($this);
-            $builder->className($class);
+            $builder->setClassName($class);
             $instance->viewClass = $class;
+
             return $instance;
         }
 
         if (method_exists($this, 'viewBuilder')) {
-            $builder->theme($this->viewBuilder()->theme());
+            $builder->setTheme($this->viewBuilder()->getTheme());
         }
 
         if (isset($this->viewClass)) {
-            $builder->className($this->viewClass);
+            $builder->setClassName($this->viewClass);
             $instance->viewClass = $this->viewClass;
         }
+
         return $instance;
     }
 }

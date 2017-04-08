@@ -18,19 +18,27 @@ use Cake\Event\Event;
 
 /**
  * TestAuthComponent class
- *
  */
 class TestAuthComponent extends AuthComponent
 {
+    /**
+     * @var string|null
+     */
+    public $authCheckCalledFrom = null;
 
+    /**
+     * @param Event $event
+     * @return \Cake\Http\Response|null
+     */
     public function authCheck(Event $event)
     {
         if (isset($this->earlyAuthTest)) {
             if ($this->_config['checkAuthIn'] !== $event->name()) {
-                return;
+                return null;
             }
             $this->authCheckCalledFrom = $event->name();
-            return;
+
+            return null;
         }
 
         return parent::authCheck($event);

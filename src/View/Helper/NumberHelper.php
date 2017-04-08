@@ -33,7 +33,7 @@ class NumberHelper extends Helper
     /**
      * Default config for this class
      *
-     * @var mixed
+     * @var array
      */
     protected $_defaultConfig = [
         'engine' => 'Cake\I18n\Number'
@@ -89,7 +89,7 @@ class NumberHelper extends Helper
      *
      * @param float $number A floating point number.
      * @param int $precision The precision of the returned number.
-     * @return float Formatted float.
+     * @return string Formatted float.
      * @see \Cake\I18n\Number::precision()
      * @link http://book.cakephp.org/3.0/en/views/helpers/number.html#formatting-floating-point-numbers
      */
@@ -151,6 +151,7 @@ class NumberHelper extends Helper
     {
         $formatted = $this->_engine->format($number, $options);
         $options += ['escape' => true];
+
         return $options['escape'] ? h($formatted) : $formatted;
     }
 
@@ -174,7 +175,7 @@ class NumberHelper extends Helper
      * - `escape` - Whether or not to escape html in resulting string
      *
      * @param float $number Value to format.
-     * @param string $currency International currency name such as 'USD', 'EUR', 'JPY', 'CAD'
+     * @param string|null $currency International currency name such as 'USD', 'EUR', 'JPY', 'CAD'
      * @param array $options Options list.
      * @return string Number formatted as a currency.
      */
@@ -182,6 +183,7 @@ class NumberHelper extends Helper
     {
         $formatted = $this->_engine->currency($number, $currency, $options);
         $options += ['escape' => true];
+
         return $options['escape'] ? h($formatted) : $formatted;
     }
 
@@ -205,6 +207,7 @@ class NumberHelper extends Helper
     {
         $formatted = $this->_engine->formatDelta($value, $options);
         $options += ['escape' => true];
+
         return $options['escape'] ? h($formatted) : $formatted;
     }
 

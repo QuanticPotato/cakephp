@@ -36,7 +36,7 @@ class CheckboxWidgetTest extends TestCase
             'checkbox' => '<input type="checkbox" name="{{name}}" value="{{value}}"{{attrs}}>',
         ];
         $this->templates = new StringTemplate($templates);
-        $this->context = $this->getMock('Cake\View\Form\ContextInterface');
+        $this->context = $this->getMockBuilder('Cake\View\Form\ContextInterface')->getMock();
     }
 
     /**
@@ -258,6 +258,37 @@ class CheckboxWidgetTest extends TestCase
                 'custom' => 'value',
                 'name' => 'Comment[spam]',
                 'value' => 1,
+            ]
+        ];
+        $this->assertHtml($expected, $result);
+    }
+
+    /**
+     * testRenderCustomAttributes method
+     *
+     * Test render with custom attributes.
+     *
+     * @return void
+     */
+    public function testRenderCustomAttributes()
+    {
+        $checkbox = new CheckboxWidget($this->templates);
+
+        $result = $checkbox->render([
+            'name' => 'Model[field]',
+            'class' => 'my-class',
+            'data-ref' => 'custom-attr',
+            'value' => 1
+
+        ], $this->context);
+
+        $expected = [
+            'input' => [
+                'type' => 'checkbox',
+                'name' => 'Model[field]',
+                'value' => '1',
+                'class' => 'my-class',
+                'data-ref' => 'custom-attr'
             ]
         ];
         $this->assertHtml($expected, $result);

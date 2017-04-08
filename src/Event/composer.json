@@ -5,13 +5,12 @@
     "authors": [
         {
         "name": "CakePHP Community",
-        "homepage": "http://cakephp.org"
+        "homepage": "https://cakephp.org"
     }
     ],
     "autoload": {
         "psr-4": {
             "Cake\\Event\\": "."
         }
-    },
-    "minimum-stability": "beta"
+    }
 }

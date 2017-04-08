@@ -20,8 +20,7 @@ use Cake\TestSuite\TestCase;
 use Cake\Utility\Hash;
 
 /**
- * Class HashTest
- *
+ * HashTest
  */
 class HashTest extends TestCase
 {
@@ -395,6 +394,20 @@ class HashTest extends TestCase
     }
 
     /**
+     * Test that get() can extract '' key data.
+     *
+     * @return void
+     */
+    public function testGetEmptyKey()
+    {
+        $data = [
+            '' => 'some value'
+        ];
+        $result = Hash::get($data, '');
+        $this->assertSame($data[''], $result);
+    }
+
+    /**
      * Test get() for invalid $data type
      *
      * @expectedException \InvalidArgumentException
@@ -457,19 +470,19 @@ class HashTest extends TestCase
     {
         $data = [];
         $result = Hash::maxDimensions($data);
-        $this->assertEquals(0, $result);
+        $this->assertSame(0, $result);
 
         $data = ['a', 'b'];
         $result = Hash::maxDimensions($data);
-        $this->assertEquals(1, $result);
+        $this->assertSame(1, $result);
 
         $data = ['1' => '1.1', '2', '3' => ['3.1' => '3.1.1']];
         $result = Hash::maxDimensions($data);
-        $this->assertEquals($result, 2);
+        $this->assertSame(2, $result);
 
         $data = ['1' => ['1.1' => '1.1.1'], '2', '3' => ['3.1' => ['3.1.1' => '3.1.1.1']]];
         $result = Hash::maxDimensions($data);
-        $this->assertEquals($result, 3);
+        $this->assertSame(3, $result);
 
         $data = [
             '1' => ['1.1' => '1.1.1'],
@@ -477,7 +490,7 @@ class HashTest extends TestCase
             '3' => ['3.1' => ['3.1.1' => '3.1.1.1']]
         ];
         $result = Hash::maxDimensions($data);
-        $this->assertEquals($result, 4);
+        $this->assertSame(4, $result);
 
         $data = [
            '1' => [
@@ -492,7 +505,14 @@ class HashTest extends TestCase
            '2' => ['2.1' => '2.1.1']
         ];
         $result = Hash::maxDimensions($data);
-        $this->assertEquals($result, 5);
+        $this->assertSame(5, $result);
+
+        $data = [
+           '1' => false,
+           '2' => ['2.1' => '2.1.1']
+        ];
+        $result = Hash::maxDimensions($data);
+        $this->assertSame(2, $result);
     }
 
     /**
@@ -658,9 +678,6 @@ class HashTest extends TestCase
         $result = Hash::merge(['foo'], ['bar']);
         $this->assertEquals($result, ['foo', 'bar']);
 
-        $result = Hash::merge(['foo'], ['user' => 'bob', 'no-bar'], 'bar');
-        $this->assertEquals($result, ['foo', 'user' => 'bob', 'no-bar', 'bar']);
-
         $a = ['foo', 'foo2'];
         $b = ['bar', 'bar2'];
         $expected = ['foo', 'foo2', 'bar', 'bar2'];
@@ -680,30 +697,6 @@ class HashTest extends TestCase
         $b = ['users' => 'none'];
         $expected = ['users' => 'none'];
         $this->assertEquals($expected, Hash::merge($a, $b));
-
-        $a = ['users' => ['lisa' => ['id' => 5, 'pw' => 'secret']], 'cakephp'];
-        $b = ['users' => ['lisa' => ['pw' => 'new-pass', 'age' => 23]], 'ice-cream'];
-        $expected = [
-            'users' => ['lisa' => ['id' => 5, 'pw' => 'new-pass', 'age' => 23]],
-            'cakephp',
-            'ice-cream'
-        ];
-        $result = Hash::merge($a, $b);
-        $this->assertEquals($expected, $result);
-
-        $c = [
-            'users' => ['lisa' => ['pw' => 'you-will-never-guess', 'age' => 25, 'pet' => 'dog']],
-            'chocolate'
-        ];
-        $expected = [
-            'users' => ['lisa' => ['id' => 5, 'pw' => 'you-will-never-guess', 'age' => 25, 'pet' => 'dog']],
-            'cakephp',
-            'ice-cream',
-            'chocolate'
-        ];
-        $this->assertEquals($expected, Hash::merge($a, $b, $c));
-
-        $this->assertEquals($expected, Hash::merge($a, $b, [], $c));
 
         $a = [
             'Tree',
@@ -734,6 +727,54 @@ class HashTest extends TestCase
             'Transactional'
         ];
         $this->assertEquals($expected, Hash::merge($a, $b));
+    }
+
+    /**
+     * Test that merge() works with variadic arguments.
+     *
+     * @return void
+     */
+    public function testMergeVariadic()
+    {
+        $result = Hash::merge(
+            ['hkuc' => ['lion']],
+            ['hkuc' => 'lion']
+        );
+        $expected = ['hkuc' => 'lion'];
+        $this->assertEquals($expected, $result);
+
+        $result = Hash::merge(
+            ['hkuc' => ['lion']],
+            ['hkuc' => ['lion']],
+            ['hkuc' => 'lion']
+        );
+        $this->assertEquals($expected, $result);
+
+        $result = Hash::merge(['foo'], ['user' => 'bob', 'no-bar'], 'bar');
+        $this->assertEquals($result, ['foo', 'user' => 'bob', 'no-bar', 'bar']);
+
+        $a = ['users' => ['lisa' => ['id' => 5, 'pw' => 'secret']], 'cakephp'];
+        $b = ['users' => ['lisa' => ['pw' => 'new-pass', 'age' => 23]], 'ice-cream'];
+        $expected = [
+            'users' => ['lisa' => ['id' => 5, 'pw' => 'new-pass', 'age' => 23]],
+            'cakephp',
+            'ice-cream'
+        ];
+        $result = Hash::merge($a, $b);
+        $this->assertEquals($expected, $result);
+
+        $c = [
+            'users' => ['lisa' => ['pw' => 'you-will-never-guess', 'age' => 25, 'pet' => 'dog']],
+            'chocolate'
+        ];
+        $expected = [
+            'users' => ['lisa' => ['id' => 5, 'pw' => 'you-will-never-guess', 'age' => 25, 'pet' => 'dog']],
+            'cakephp',
+            'ice-cream',
+            'chocolate'
+        ];
+        $this->assertEquals($expected, Hash::merge($a, $b, $c));
+        $this->assertEquals($expected, Hash::merge($a, $b, [], $c));
     }
 
     /**
@@ -816,8 +857,21 @@ class HashTest extends TestCase
      */
     public function testFilter()
     {
-        $result = Hash::filter(['0', false, true, 0, ['one thing', 'I can tell you', 'is you got to be', false]]);
-        $expected = ['0', 2 => true, 3 => 0, 4 => ['one thing', 'I can tell you', 'is you got to be']];
+        $result = Hash::filter([
+            '0',
+            false,
+            true,
+            0,
+            0.0,
+            ['one thing', 'I can tell you', 'is you got to be', false]
+        ]);
+        $expected = [
+            0 => '0',
+            2 => true,
+            3 => 0,
+            4 => 0.0,
+            5 => ['one thing', 'I can tell you', 'is you got to be']
+        ];
         $this->assertSame($expected, $result);
 
         $result = Hash::filter([1, [false]]);
@@ -883,13 +937,28 @@ class HashTest extends TestCase
     /**
      * Test passing invalid argument type
      *
-     * @expectedException InvalidArgumentException
+     * @expectedException \InvalidArgumentException
      * @expectedExceptionMessage Invalid data type, must be an array or \ArrayAccess instance.
      * @return void
      */
     public function testExtractInvalidArgument()
     {
         Hash::extract('foo', '');
+    }
+
+    /**
+     * Test the extraction of a single value filtered by another field.
+     *
+     * @dataProvider articleDataSets
+     * @return void
+     */
+    public function testExtractSingleValueWithFilteringByAnotherField($data)
+    {
+        $result = Hash::extract($data, '{*}.Article[id=1].title');
+        $this->assertEquals([0 => 'First Article'], $result);
+
+        $result = Hash::extract($data, '{*}.Article[id=2].title');
+        $this->assertEquals([0 => 'Second Article'], $result);
     }
 
     /**
@@ -1643,6 +1712,39 @@ class HashTest extends TestCase
     }
 
     /**
+     * Test sort() with locale option.
+     *
+     * @return void
+     */
+    public function testSortLocale()
+    {
+        // get the current locale
+        $oldLocale = setlocale(LC_COLLATE, '0');
+
+        $updated = setlocale(LC_COLLATE, 'de_DE.utf8');
+        $this->skipIf($updated === false, 'Could not set locale to de_DE.utf8, skipping test.');
+
+        $items = [
+            ['Item' => ['entry' => 'Übergabe']],
+            ['Item' => ['entry' => 'Ostfriesland']],
+            ['Item' => ['entry' => 'Äpfel']],
+            ['Item' => ['entry' => 'Apfel']],
+        ];
+
+        $result = Hash::sort($items, '{n}.Item.entry', 'asc', 'locale');
+        $expected = [
+            ['Item' => ['entry' => 'Apfel']],
+            ['Item' => ['entry' => 'Äpfel']],
+            ['Item' => ['entry' => 'Ostfriesland']],
+            ['Item' => ['entry' => 'Übergabe']],
+        ];
+        $this->assertEquals($expected, $result);
+
+        // change to the original locale
+        setlocale(LC_COLLATE, $oldLocale);
+    }
+
+    /**
      * Test that sort() with 'natural' type will fallback to 'regular' as SORT_NATURAL is introduced in PHP 5.4
      *
      * @return void
@@ -1727,7 +1829,6 @@ class HashTest extends TestCase
         $this->assertEquals($expected, $result);
     }
 
-
     /**
      * test sorting with string ignoring case.
      *
@@ -1772,6 +1873,59 @@ class HashTest extends TestCase
             ['Item' => ['name' => 'Baz']],
         ];
         $this->assertEquals($expected, $sorted);
+    }
+
+    /**
+     * Test sorting on a nested key that is sometimes undefined.
+     *
+     * @return void
+     */
+    public function testSortSparse()
+    {
+        $data = [
+            [
+                'id' => 1,
+                'title' => 'element 1',
+                'extra' => 1,
+            ],
+            [
+                'id' => 2,
+                'title' => 'element 2',
+                'extra' => 2,
+            ],
+            [
+                'id' => 3,
+                'title' => 'element 3',
+            ],
+            [
+                'id' => 4,
+                'title' => 'element 4',
+                'extra' => 4,
+            ]
+        ];
+        $result = Hash::sort($data, '{n}.extra', 'desc', 'natural');
+        $expected = [
+            [
+                'id' => 4,
+                'title' => 'element 4',
+                'extra' => 4,
+            ],
+            [
+                'id' => 2,
+                'title' => 'element 2',
+                'extra' => 2,
+            ],
+            [
+                'id' => 1,
+                'title' => 'element 1',
+                'extra' => 1,
+            ],
+            [
+                'id' => 3,
+                'title' => 'element 3',
+            ],
+        ];
+        $this->assertSame($expected, $result);
     }
 
     /**
@@ -2033,7 +2187,7 @@ class HashTest extends TestCase
     public function testCombine()
     {
         $result = Hash::combine([], '{n}.User.id', '{n}.User.Data');
-        $this->assertTrue(empty($result));
+        $this->assertEmpty($result);
 
         $a = static::userData();
 

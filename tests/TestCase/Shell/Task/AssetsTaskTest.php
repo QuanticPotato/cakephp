@@ -14,16 +14,12 @@
  */
 namespace Cake\Test\TestCase\Shell\Task;
 
-use Cake\Core\App;
-use Cake\Core\Configure;
 use Cake\Core\Plugin;
 use Cake\Filesystem\Folder;
-use Cake\Shell\Task\AssetsTask;
 use Cake\TestSuite\TestCase;
 
 /**
  * AssetsTaskTest class
- *
  */
 class AssetsTaskTest extends TestCase
 {
@@ -42,13 +38,14 @@ class AssetsTaskTest extends TestCase
             'Skip AssetsTask tests on windows to prevent side effects for UrlHelper tests on AppVeyor.'
         );
 
-        $this->io = $this->getMock('Cake\Console\ConsoleIo', [], [], '', false);
+        $this->io = $this->getMockBuilder('Cake\Console\ConsoleIo')
+            ->disableOriginalConstructor()
+            ->getMock();
 
-        $this->Task = $this->getMock(
-            'Cake\Shell\Task\AssetsTask',
-            ['in', 'out', 'err', '_stop'],
-            [$this->io]
-        );
+        $this->Task = $this->getMockBuilder('Cake\Shell\Task\AssetsTask')
+            ->setMethods(['in', 'out', 'err', '_stop'])
+            ->setConstructorArgs([$this->io])
+            ->getMock();
     }
 
     /**
@@ -77,7 +74,7 @@ class AssetsTaskTest extends TestCase
 
         $path = WWW_ROOT . 'test_plugin';
         $link = new \SplFileInfo($path);
-        $this->assertTrue(file_exists($path . DS . 'root.js'));
+        $this->assertFileExists($path . DS . 'root.js');
         if (DS === '\\') {
             $this->assertTrue($link->isDir());
             $folder = new Folder($path);
@@ -93,7 +90,7 @@ class AssetsTaskTest extends TestCase
         // be a link. But if the directory is created by the shell itself
         // symlinking fails and the assets folder is copied as fallback.
         $this->assertTrue($link->isDir());
-        $this->assertTrue(file_exists($path . DS . 'css' . DS . 'company.css'));
+        $this->assertFileExists($path . DS . 'css' . DS . 'company.css');
         $folder = new Folder(WWW_ROOT . 'company');
         $folder->delete();
     }
@@ -117,7 +114,7 @@ class AssetsTaskTest extends TestCase
         } else {
             $this->assertTrue($link->isLink());
         }
-        $this->assertTrue(file_exists($path . DS . 'css' . DS . 'company.css'));
+        $this->assertFileExists($path . DS . 'css' . DS . 'company.css');
         $folder = new Folder(WWW_ROOT . 'company');
         $folder->delete();
     }
@@ -131,11 +128,10 @@ class AssetsTaskTest extends TestCase
     {
         Plugin::load('TestTheme');
 
-        $shell = $this->getMock(
-            'Cake\Shell\Task\AssetsTask',
-            ['in', 'out', 'err', '_stop', '_createSymlink', '_copyDirectory'],
-            [$this->io]
-        );
+        $shell = $this->getMockBuilder('Cake\Shell\Task\AssetsTask')
+            ->setMethods(['in', 'out', 'err', '_stop', '_createSymlink', '_copyDirectory'])
+            ->setConstructorArgs([$this->io])
+            ->getMock();
 
         $this->assertTrue(is_dir(WWW_ROOT . 'test_theme'));
 
@@ -154,7 +150,7 @@ class AssetsTaskTest extends TestCase
         Plugin::load('TestPluginTwo');
 
         $this->Task->symlink();
-        $this->assertFalse(file_exists(WWW_ROOT . 'test_plugin_two'));
+        $this->assertFileNotExists(WWW_ROOT . 'test_plugin_two');
     }
 
     /**
@@ -171,7 +167,7 @@ class AssetsTaskTest extends TestCase
 
         $path = WWW_ROOT . 'test_plugin';
         $link = new \SplFileInfo($path);
-        $this->assertTrue(file_exists($path . DS . 'root.js'));
+        $this->assertFileExists($path . DS . 'root.js');
         unlink($path);
 
         $path = WWW_ROOT . 'company' . DS . 'test_plugin_three';
@@ -195,7 +191,7 @@ class AssetsTaskTest extends TestCase
         $path = WWW_ROOT . 'test_plugin';
         $dir = new \SplFileInfo($path);
         $this->assertTrue($dir->isDir());
-        $this->assertTrue(file_exists($path . DS . 'root.js'));
+        $this->assertFileExists($path . DS . 'root.js');
 
         $folder = new Folder($path);
         $folder->delete();
@@ -203,7 +199,7 @@ class AssetsTaskTest extends TestCase
         $path = WWW_ROOT . 'company' . DS . 'test_plugin_three';
         $link = new \SplFileInfo($path);
         $this->assertTrue($link->isDir());
-        $this->assertTrue(file_exists($path . DS . 'css' . DS . 'company.css'));
+        $this->assertFileExists($path . DS . 'css' . DS . 'company.css');
 
         $folder = new Folder(WWW_ROOT . 'company');
         $folder->delete();

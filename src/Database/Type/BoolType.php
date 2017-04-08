@@ -16,6 +16,7 @@ namespace Cake\Database\Type;
 
 use Cake\Database\Driver;
 use Cake\Database\Type;
+use Cake\Database\TypeInterface;
 use InvalidArgumentException;
 use PDO;
 
@@ -24,14 +25,36 @@ use PDO;
  *
  * Use to convert bool data between PHP and the database types.
  */
-class BoolType extends Type
+class BoolType extends Type implements TypeInterface
 {
+    /**
+     * Identifier name for this type.
+     *
+     * (This property is declared here again so that the inheritance from
+     * Cake\Database\Type can be removed in the future.)
+     *
+     * @var string|null
+     */
+    protected $_name = null;
+
+    /**
+     * Constructor.
+     *
+     * (This method is declared here again so that the inheritance from
+     * Cake\Database\Type can be removed in the future.)
+     *
+     * @param string|null $name The name identifying this type
+     */
+    public function __construct($name = null)
+    {
+        $this->_name = $name;
+    }
 
     /**
      * Convert bool data into the database format.
      *
      * @param mixed $value The value to convert.
-     * @param Driver $driver The driver instance to convert with.
+     * @param \Cake\Database\Driver $driver The driver instance to convert with.
      * @return bool|null
      */
     public function toDatabase($value, Driver $driver)
@@ -51,7 +74,7 @@ class BoolType extends Type
      * Convert bool values to PHP booleans
      *
      * @param mixed $value The value to convert.
-     * @param Driver $driver The driver instance to convert with.
+     * @param \Cake\Database\Driver $driver The driver instance to convert with.
      * @return bool|null
      */
     public function toPHP($value, Driver $driver)
@@ -62,6 +85,7 @@ class BoolType extends Type
         if (is_string($value) && !is_numeric($value)) {
             return strtolower($value) === 'true' ? true : false;
         }
+
         return !empty($value);
     }
 
@@ -69,7 +93,7 @@ class BoolType extends Type
      * Get the correct PDO binding type for bool data.
      *
      * @param mixed $value The value being bound.
-     * @param Driver $driver The driver.
+     * @param \Cake\Database\Driver $driver The driver.
      * @return int
      */
     public function toStatement($value, Driver $driver)
@@ -85,7 +109,7 @@ class BoolType extends Type
      * Marshalls request data into PHP booleans.
      *
      * @param mixed $value The value to convert.
-     * @return mixed Converted value.
+     * @return bool|null Converted value.
      */
     public function marshal($value)
     {
@@ -98,6 +122,7 @@ class BoolType extends Type
         if ($value === 'false') {
             return false;
         }
+
         return !empty($value);
     }
 }

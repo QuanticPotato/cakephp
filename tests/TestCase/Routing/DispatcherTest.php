@@ -14,198 +14,17 @@
 namespace Cake\Test\TestCase\Routing;
 
 use Cake\Controller\Controller;
-use Cake\Core\App;
 use Cake\Core\Configure;
 use Cake\Core\Plugin;
-use Cake\Event\Event;
-use Cake\Network\Request;
-use Cake\Network\Response;
+use Cake\Http\Response;
+use Cake\Http\ServerRequest;
 use Cake\Network\Session;
 use Cake\Routing\Dispatcher;
 use Cake\Routing\Filter\ControllerFactoryFilter;
 use Cake\TestSuite\TestCase;
-use Cake\Utility\Inflector;
-
-/**
- * A testing stub that doesn't send headers.
- */
-class DispatcherMockResponse extends Response
-{
-
-    protected function _sendHeader($name, $value = null)
-    {
-        return $name . ' ' . $value;
-    }
-}
-
-/**
- * TestDispatcher class
- */
-class TestDispatcher extends Dispatcher
-{
-
-    /**
-     * Controller instance, made publicly available for testing
-     *
-     * @var Controller
-     */
-    public $controller;
-
-    /**
-     * invoke method
-     *
-     * @param \Cake\Controller\Controller $controller
-     * @return \Cake\Network\Response $response
-     */
-    protected function _invoke(Controller $controller)
-    {
-        $this->controller = $controller;
-        return parent::_invoke($controller);
-    }
-}
-
-/**
- * MyPluginAppController class
- *
- */
-class MyPluginAppController extends Controller
-{
-}
-
-interface DispatcherTestInterfaceController
-{
-
-    public function index();
-}
-
-/**
- * MyPluginController class
- *
- */
-class MyPluginController extends MyPluginAppController
-{
-
-    /**
-     * name property
-     *
-     * @var string
-     */
-    public $name = 'MyPlugin';
-
-    /**
-     * index method
-     *
-     * @return void
-     */
-    public function index()
-    {
-        return true;
-    }
-
-    /**
-     * add method
-     *
-     * @return void
-     */
-    public function add()
-    {
-        return true;
-    }
-
-    /**
-     * admin_add method
-     *
-     * @param mixed $id
-     * @return void
-     */
-    public function admin_add($id = null)
-    {
-        return $id;
-    }
-}
-
-/**
- * OtherPagesController class
- *
- */
-class OtherPagesController extends MyPluginAppController
-{
-
-    /**
-     * name property
-     *
-     * @var string
-     */
-    public $name = 'OtherPages';
-
-    /**
-     * display method
-     *
-     * @param string $page
-     * @return void
-     */
-    public function display($page = null)
-    {
-        return $page;
-    }
-
-    /**
-     * index method
-     *
-     * @return void
-     */
-    public function index()
-    {
-        return true;
-    }
-}
-
-/**
- * ArticlesTestAppController class
- *
- */
-class ArticlesTestAppController extends Controller
-{
-}
-
-/**
- * ArticlesTestController class
- *
- */
-class ArticlesTestController extends ArticlesTestAppController
-{
-
-    /**
-     * name property
-     *
-     * @var string
-     */
-    public $name = 'ArticlesTest';
-
-    /**
-     * admin_index method
-     *
-     * @return void
-     */
-    public function admin_index()
-    {
-        return true;
-    }
-
-    /**
-     * fake index method.
-     *
-     * @return void
-     */
-    public function index()
-    {
-        return true;
-    }
-}
 
 /**
  * DispatcherTest class
- *
  */
 class DispatcherTest extends TestCase
 {
@@ -226,7 +45,7 @@ class DispatcherTest extends TestCase
         Configure::write('App.webroot', 'webroot');
         Configure::write('App.namespace', 'TestApp');
 
-        $this->dispatcher = new TestDispatcher();
+        $this->dispatcher = new Dispatcher();
         $this->dispatcher->addFilter(new ControllerFactoryFilter());
     }
 
@@ -250,14 +69,14 @@ class DispatcherTest extends TestCase
      */
     public function testMissingController()
     {
-        $request = new Request([
+        $request = new ServerRequest([
             'url' => 'some_controller/home',
             'params' => [
                 'controller' => 'SomeController',
                 'action' => 'home',
             ]
         ]);
-        $response = $this->getMock('Cake\Network\Response');
+        $response = $this->getMockBuilder('Cake\Http\Response')->getMock();
         $this->dispatcher->dispatch($request, $response, ['return' => 1]);
     }
 
@@ -265,20 +84,20 @@ class DispatcherTest extends TestCase
      * testMissingControllerInterface method
      *
      * @expectedException \Cake\Routing\Exception\MissingControllerException
-     * @expectedExceptionMessage Controller class DispatcherTestInterface could not be found.
+     * @expectedExceptionMessage Controller class Interface could not be found.
      * @return void
      */
     public function testMissingControllerInterface()
     {
-        $request = new Request([
-            'url' => 'dispatcher_test_interface/index',
+        $request = new ServerRequest([
+            'url' => 'interface/index',
             'params' => [
-                'controller' => 'DispatcherTestInterface',
+                'controller' => 'Interface',
                 'action' => 'index',
             ]
         ]);
-        $url = new Request('dispatcher_test_interface/index');
-        $response = $this->getMock('Cake\Network\Response');
+        $url = new ServerRequest('dispatcher_test_interface/index');
+        $response = $this->getMockBuilder('Cake\Http\Response')->getMock();
         $this->dispatcher->dispatch($request, $response, ['return' => 1]);
     }
 
@@ -291,14 +110,38 @@ class DispatcherTest extends TestCase
      */
     public function testMissingControllerAbstract()
     {
-        $request = new Request([
+        $request = new ServerRequest([
             'url' => 'abstract/index',
             'params' => [
                 'controller' => 'Abstract',
                 'action' => 'index',
             ]
         ]);
-        $response = $this->getMock('Cake\Network\Response');
+        $response = $this->getMockBuilder('Cake\Http\Response')->getMock();
+        $this->dispatcher->dispatch($request, $response, ['return' => 1]);
+    }
+
+    /**
+     * Test that lowercase controller names result in missing controller errors.
+     *
+     * In case-insensitive file systems, lowercase controller names will kind of work.
+     * This causes annoying deployment issues for lots of folks.
+     *
+     * @expectedException \Cake\Routing\Exception\MissingControllerException
+     * @expectedExceptionMessage Controller class somepages could not be found.
+     * @return void
+     */
+    public function testMissingControllerLowercase()
+    {
+        $request = new ServerRequest([
+            'url' => 'pages/home',
+            'params' => [
+                'controller' => 'somepages',
+                'action' => 'display',
+                'pass' => ['home'],
+            ]
+        ]);
+        $response = $this->getMockBuilder('Cake\Http\Response')->getMock();
         $this->dispatcher->dispatch($request, $response, ['return' => 1]);
     }
 
@@ -309,20 +152,20 @@ class DispatcherTest extends TestCase
      */
     public function testDispatchBasic()
     {
-        $url = new Request([
+        $url = new ServerRequest([
             'url' => 'pages/home',
             'params' => [
                 'controller' => 'Pages',
                 'action' => 'display',
                 'pass' => ['extract'],
-                'return' => 1
             ]
         ]);
-        $response = $this->getMock('Cake\Network\Response');
+        $response = $this->getMockBuilder('Cake\Http\Response')->getMock();
+        $response->expects($this->once())
+            ->method('send');
 
-        $this->dispatcher->dispatch($url, $response);
-        $expected = 'Pages';
-        $this->assertEquals($expected, $this->dispatcher->controller->name);
+        $result = $this->dispatcher->dispatch($url, $response);
+        $this->assertNull($result);
     }
 
     /**
@@ -332,7 +175,7 @@ class DispatcherTest extends TestCase
      */
     public function testDispatchActionReturnsResponse()
     {
-        $request = new Request([
+        $request = new ServerRequest([
             'url' => 'some_pages/responseGenerator',
             'params' => [
                 'controller' => 'SomePages',
@@ -340,72 +183,15 @@ class DispatcherTest extends TestCase
                 'pass' => []
             ]
         ]);
-        $response = $this->getMock('Cake\Network\Response', ['_sendHeader']);
+        $response = $this->getMockBuilder('Cake\Http\Response')
+            ->setMethods(['_sendHeader'])
+            ->getMock();
 
         ob_start();
         $this->dispatcher->dispatch($request, $response);
         $result = ob_get_clean();
 
         $this->assertEquals('new response', $result);
-    }
-
-    /**
-     * testPrefixDispatch method
-     *
-     * @return void
-     */
-    public function testPrefixDispatch()
-    {
-        $request = new Request([
-            'url' => 'admin/posts/index',
-            'params' => [
-                'prefix' => 'Admin',
-                'controller' => 'Posts',
-                'action' => 'index',
-                'pass' => [],
-                'return' => 1
-            ]
-        ]);
-        $response = $this->getMock('Cake\Network\Response');
-
-        $this->dispatcher->dispatch($request, $response);
-
-        $this->assertInstanceOf(
-            'TestApp\Controller\Admin\PostsController',
-            $this->dispatcher->controller
-        );
-        $expected = '/admin/posts/index';
-        $this->assertSame($expected, $request->here);
-    }
-
-    /**
-     * test prefix dispatching in a plugin.
-     *
-     * @return void
-     */
-    public function testPrefixDispatchPlugin()
-    {
-        Plugin::load('TestPlugin');
-
-        $request = new Request([
-            'url' => 'admin/test_plugin/comments/index',
-            'params' => [
-                'plugin' => 'TestPlugin',
-                'prefix' => 'Admin',
-                'controller' => 'Comments',
-                'action' => 'index',
-                'pass' => [],
-                'return' => 1
-            ]
-        ]);
-        $response = $this->getMock('Cake\Network\Response');
-
-        $this->dispatcher->dispatch($request, $response);
-
-        $this->assertInstanceOf(
-            'TestPlugin\Controller\Admin\CommentsController',
-            $this->dispatcher->controller
-        );
     }
 
     /**
@@ -419,7 +205,7 @@ class DispatcherTest extends TestCase
     {
         Plugin::load('TestPlugin');
 
-        $request = new Request([
+        $request = new ServerRequest([
             'url' => 'TestPlugin.Tests/index',
             'params' => [
                 'plugin' => '',
@@ -429,7 +215,7 @@ class DispatcherTest extends TestCase
                 'return' => 1
             ]
         ]);
-        $response = $this->getMock('Cake\Network\Response');
+        $response = $this->getMockBuilder('Cake\Http\Response')->getMock();
         $this->dispatcher->dispatch($request, $response);
     }
 
@@ -442,7 +228,7 @@ class DispatcherTest extends TestCase
      */
     public function testDispatchBadName()
     {
-        $request = new Request([
+        $request = new ServerRequest([
             'url' => 'TestApp%5CController%5CPostsController/index',
             'params' => [
                 'plugin' => '',
@@ -452,7 +238,7 @@ class DispatcherTest extends TestCase
                 'return' => 1
             ]
         ]);
-        $response = $this->getMock('Cake\Network\Response');
+        $response = $this->getMockBuilder('Cake\Http\Response')->getMock();
         $this->dispatcher->dispatch($request, $response);
     }
 
@@ -463,10 +249,9 @@ class DispatcherTest extends TestCase
      */
     public function testDispatcherFilter()
     {
-        $filter = $this->getMock(
-            'Cake\Routing\DispatcherFilter',
-            ['beforeDispatch', 'afterDispatch']
-        );
+        $filter = $this->getMockBuilder('Cake\Routing\DispatcherFilter')
+            ->setMethods(['beforeDispatch', 'afterDispatch'])
+            ->getMock();
 
         $filter->expects($this->at(0))
             ->method('beforeDispatch');
@@ -474,16 +259,18 @@ class DispatcherTest extends TestCase
             ->method('afterDispatch');
         $this->dispatcher->addFilter($filter);
 
-        $request = new Request([
+        $request = new ServerRequest([
             'url' => '/',
             'params' => [
-                'controller' => 'pages',
+                'controller' => 'Pages',
                 'action' => 'display',
                 'home',
                 'pass' => []
             ]
         ]);
-        $response = $this->getMock('Cake\Network\Response', ['send']);
+        $response = $this->getMockBuilder('Cake\Http\Response')
+            ->setMethods(['send'])
+            ->getMock();
         $this->dispatcher->dispatch($request, $response);
     }
 
@@ -494,14 +281,15 @@ class DispatcherTest extends TestCase
      */
     public function testBeforeDispatchAbortDispatch()
     {
-        $response = $this->getMock('Cake\Network\Response', ['send']);
+        $response = $this->getMockBuilder('Cake\Http\Response')
+            ->setMethods(['send'])
+            ->getMock();
         $response->expects($this->once())
             ->method('send');
 
-        $filter = $this->getMock(
-            'Cake\Routing\DispatcherFilter',
-            ['beforeDispatch', 'afterDispatch']
-        );
+        $filter = $this->getMockBuilder('Cake\Routing\DispatcherFilter')
+            ->setMethods(['beforeDispatch', 'afterDispatch'])
+            ->getMock();
         $filter->expects($this->once())
             ->method('beforeDispatch')
             ->will($this->returnValue($response));
@@ -509,7 +297,15 @@ class DispatcherTest extends TestCase
         $filter->expects($this->never())
             ->method('afterDispatch');
 
-        $request = new Request();
+        $request = new ServerRequest([
+            'url' => '/',
+            'params' => [
+                'controller' => 'Pages',
+                'action' => 'display',
+                'home',
+                'pass' => []
+            ]
+        ]);
         $res = new Response();
         $this->dispatcher->addFilter($filter);
         $this->dispatcher->dispatch($request, $res);
@@ -522,20 +318,21 @@ class DispatcherTest extends TestCase
      */
     public function testAfterDispatchReplaceResponse()
     {
-        $response = $this->getMock('Cake\Network\Response', ['_sendHeader', 'send']);
+        $response = $this->getMockBuilder('Cake\Http\Response')
+            ->setMethods(['_sendHeader', 'send'])
+            ->getMock();
         $response->expects($this->once())
             ->method('send');
 
-        $filter = $this->getMock(
-            'Cake\Routing\DispatcherFilter',
-            ['beforeDispatch', 'afterDispatch']
-        );
+        $filter = $this->getMockBuilder('Cake\Routing\DispatcherFilter')
+            ->setMethods(['beforeDispatch', 'afterDispatch'])
+            ->getMock();
 
         $filter->expects($this->once())
             ->method('afterDispatch')
             ->will($this->returnValue($response));
 
-        $request = new Request([
+        $request = new ServerRequest([
             'url' => '/posts',
             'params' => [
                 'plugin' => null,

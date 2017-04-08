@@ -18,12 +18,10 @@ use Cake\Collection\Collection;
 use Cake\Core\Configure;
 use Cake\ORM\Entity;
 use Cake\TestSuite\TestCase;
-use Cake\Utility\Exception\XmlException;
 use Cake\Utility\Xml;
 
 /**
  * XmlTest class
- *
  */
 class XmlTest extends TestCase
 {
@@ -113,6 +111,19 @@ class XmlTest extends TestCase
 
         $obj = Xml::build($xml, ['return' => 'domdocument', 'encoding' => null]);
         $this->assertNotRegExp('/encoding/', $obj->saveXML());
+    }
+
+    /**
+     * test build() method with huge option
+     *
+     * @return void
+     */
+    public function testBuildHuge()
+    {
+        $xml = '<tag>value</tag>';
+        $obj = Xml::build($xml, ['parseHuge' => true]);
+        $this->assertEquals('tag', $obj->getName());
+        $this->assertEquals('value', (string)$obj);
     }
 
     /**
@@ -379,7 +390,15 @@ XML;
         $obj = Xml::fromArray($xml, 'attributes');
         $xmlText = '<' . '?xml version="1.0" encoding="UTF-8"?><tags><tag id="1">defect</tag></tags>';
         $this->assertXmlStringEqualsXmlString($xmlText, $obj->asXML());
+    }
 
+    /**
+     * Test fromArray() with zero values.
+     *
+     * @return void
+     */
+    public function testFromArrayZeroValue()
+    {
         $xml = [
             'tag' => [
                 '@' => 0,
@@ -390,6 +409,16 @@ XML;
         $xmlText = <<<XML
 <?xml version="1.0" encoding="UTF-8"?>
 <tag test="A test">0</tag>
+XML;
+        $this->assertXmlStringEqualsXmlString($xmlText, $obj->asXML());
+
+        $xml = [
+            'tag' => ['0']
+        ];
+        $obj = Xml::fromArray($xml);
+        $xmlText = <<<XML
+<?xml version="1.0" encoding="UTF-8"?>
+<tag>0</tag>
 XML;
         $this->assertXmlStringEqualsXmlString($xmlText, $obj->asXML());
     }
@@ -779,7 +808,7 @@ XML;
         $rss = file_get_contents(CORE_TESTS . 'Fixture/rss.xml');
         $rssAsArray = Xml::toArray(Xml::build($rss));
         $this->assertEquals('2.0', $rssAsArray['rss']['@version']);
-        $this->assertEquals(2, count($rssAsArray['rss']['channel']['item']));
+        $this->assertCount(2, $rssAsArray['rss']['channel']['item']);
 
         $atomLink = ['@href' => 'http://bakery.cakephp.org/articles/rss', '@rel' => 'self', '@type' => 'application/rss+xml'];
         $this->assertEquals($rssAsArray['rss']['channel']['atom:link'], $atomLink);
@@ -1180,5 +1209,36 @@ XML;
 </request>
 XML;
         $result = Xml::build($xml);
+        $this->assertEquals('', (string)$result->xxe);
+    }
+
+    /**
+     * Test building Xml with valid class-name in value.
+     *
+     * @see https://github.com/cakephp/cakephp/pull/9754
+     * @return void
+     */
+    public function testClassnameInValueRegressionTest()
+    {
+        $classname = self::class; // Will always be a valid class name
+        $data = [
+            'outer' => [
+                'inner' => $classname
+            ]
+        ];
+        $obj = Xml::build($data);
+        $result = $obj->asXml();
+        $this->assertContains('<inner>' . $classname . '</inner>', $result);
+    }
+
+    /**
+     * Needed function for testClassnameInValueRegressionTest.
+     *
+     * @ignore
+     * @return array
+     */
+    public function toArray()
+    {
+        return [];
     }
 }

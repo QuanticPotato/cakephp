@@ -55,6 +55,7 @@ class Sqlite extends Driver
         $config = $this->_config;
         $config['flags'] += [
             PDO::ATTR_PERSISTENT => $config['persistent'],
+            PDO::ATTR_EMULATE_PREPARES => false,
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
         ];
 
@@ -66,6 +67,7 @@ class Sqlite extends Driver
                 $this->connection()->exec($command);
             }
         }
+
         return true;
     }
 
@@ -91,9 +93,10 @@ class Sqlite extends Driver
         $isObject = $query instanceof Query;
         $statement = $this->_connection->prepare($isObject ? $query->sql() : $query);
         $result = new SqliteStatement(new PDOStatement($statement, $this), $this);
-        if ($isObject && $query->bufferResults() === false) {
+        if ($isObject && $query->isBufferedResultsEnabled() === false) {
             $result->bufferResults(false);
         }
+
         return $result;
     }
 

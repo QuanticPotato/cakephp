@@ -5,7 +5,7 @@
     "authors": [
         {
             "name": "CakePHP Community",
-            "homepage": "http://cakephp.org"
+            "homepage": "https://cakephp.org"
         }
     ],
     "require": {
@@ -19,6 +19,5 @@
         "psr-4": {
             "Cake\\Datasource\\": "."
         }
-    },
-    "minimum-stability": "beta"
+    }
 }

@@ -18,7 +18,7 @@ use Cake\Controller\ComponentRegistry;
 use Cake\Controller\Component\FlashComponent;
 use Cake\Controller\Controller;
 use Cake\Core\Configure;
-use Cake\Network\Request;
+use Cake\Http\ServerRequest;
 use Cake\Network\Session;
 use Cake\TestSuite\TestCase;
 use Exception;
@@ -38,7 +38,7 @@ class FlashComponentTest extends TestCase
     {
         parent::setUp();
         Configure::write('App.namespace', 'TestApp');
-        $this->Controller = new Controller(new Request(['session' => new Session()]));
+        $this->Controller = new Controller(new ServerRequest(['session' => new Session()]));
         $this->ComponentRegistry = new ComponentRegistry($this->Controller);
         $this->Flash = new FlashComponent($this->ComponentRegistry);
         $this->Session = new Session();
@@ -107,6 +107,49 @@ class FlashComponentTest extends TestCase
             ]
         ];
         $result = $this->Session->read('Flash.foobar');
+        $this->assertEquals($expected, $result);
+    }
+
+    public function testDuplicateIgnored()
+    {
+        $this->assertNull($this->Session->read('Flash.flash'));
+
+        $this->Flash->config('duplicate', false);
+        $this->Flash->set('This test message should appear once only');
+        $this->Flash->set('This test message should appear once only');
+        $result = $this->Session->read('Flash.flash');
+        $this->assertCount(1, $result);
+    }
+
+    /**
+     * @return void
+     */
+    public function testSetEscape()
+    {
+        $this->assertNull($this->Session->read('Flash.flash'));
+
+        $this->Flash->set('This is a <b>test</b> message', ['escape' => false, 'params' => ['foo' => 'bar']]);
+        $expected = [
+            [
+                'message' => 'This is a <b>test</b> message',
+                'key' => 'flash',
+                'element' => 'Flash/default',
+                'params' => ['foo' => 'bar', 'escape' => false]
+            ]
+        ];
+        $result = $this->Session->read('Flash.flash');
+        $this->assertEquals($expected, $result);
+
+        $this->Flash->set('This is a test message', ['key' => 'escaped', 'escape' => false, 'params' => ['foo' => 'bar', 'escape' => true]]);
+        $expected = [
+            [
+                'message' => 'This is a test message',
+                'key' => 'escaped',
+                'element' => 'Flash/default',
+                'params' => ['foo' => 'bar', 'escape' => true]
+            ]
+        ];
+        $result = $this->Session->read('Flash.escaped');
         $this->assertEquals($expected, $result);
     }
 
@@ -223,7 +266,7 @@ class FlashComponentTest extends TestCase
         ];
         $result = $this->Session->read('Flash.flash');
         $this->assertEquals($expected, $result, 'Element is ignored in magic call.');
-        
+
         $this->Flash->success('It worked', ['plugin' => 'MyPlugin']);
 
         $expected[] = [

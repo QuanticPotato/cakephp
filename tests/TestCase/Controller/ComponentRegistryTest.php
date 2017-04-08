@@ -18,10 +18,9 @@ use Cake\Controller\ComponentRegistry;
 use Cake\Controller\Component\AuthComponent;
 use Cake\Controller\Component\CookieComponent;
 use Cake\Controller\Controller;
-use Cake\Core\App;
 use Cake\Core\Plugin;
-use Cake\Network\Request;
-use Cake\Network\Response;
+use Cake\Http\Response;
+use Cake\Http\ServerRequest;
 use Cake\TestSuite\TestCase;
 
 /**
@@ -42,7 +41,7 @@ class ComponentRegistryTest extends TestCase
     public function setUp()
     {
         parent::setUp();
-        $controller = new Controller(new Request(), new Response());
+        $controller = new Controller(new ServerRequest(), new Response());
         $this->Components = new ComponentRegistry($controller);
     }
 
@@ -109,7 +108,7 @@ class ComponentRegistryTest extends TestCase
      */
     public function testLoadWithEnableFalse()
     {
-        $mock = $this->getMock('Cake\Event\EventManager');
+        $mock = $this->getMockBuilder('Cake\Event\EventManager')->getMock();
         $mock->expects($this->never())
             ->method('attach');
 
@@ -121,7 +120,7 @@ class ComponentRegistryTest extends TestCase
     }
 
     /**
-     * test missingcomponent exception
+     * test MissingComponent exception
      *
      * @expectedException \Cake\Controller\Exception\MissingComponentException
      * @return void

@@ -17,7 +17,6 @@ use Cake\Network\Exception\NotFoundException;
 
 /**
  * RequestActionController class
- *
  */
 class RequestActionController extends AppController
 {
@@ -32,11 +31,12 @@ class RequestActionController extends AppController
     /**
      * test_request_action method
      *
-     * @return \Cake\Network\Response
+     * @return \Cake\Http\Response
      */
     public function test_request_action()
     {
         $this->response->body('This is a test');
+
         return $this->response;
     }
 
@@ -45,33 +45,36 @@ class RequestActionController extends AppController
      *
      * @param mixed $id
      * @param mixed $other
-     * @return \Cake\Network\Response
+     * @return \Cake\Http\Response
      */
     public function another_ra_test($id, $other)
     {
         $this->response->body($id + $other);
+
         return $this->response;
     }
 
     /**
      * normal_request_action method
      *
-     * @return \Cake\Network\Response
+     * @return \Cake\Http\Response
      */
     public function normal_request_action()
     {
         $this->response->body('Hello World');
+
         return $this->response;
     }
 
     /**
      * returns $this->here as body
      *
-     * @return \Cake\Network\Response
+     * @return \Cake\Http\Response
      */
     public function return_here()
     {
         $this->response->body($this->here);
+
         return $this->response;
     }
 
@@ -89,29 +92,43 @@ class RequestActionController extends AppController
     /**
      * post pass, testing post passing
      *
-     * @return \Cake\Network\Response
+     * @return \Cake\Http\Response
      */
     public function post_pass()
     {
         $this->response->body(json_encode($this->request->data));
+
         return $this->response;
     }
 
     /**
      * query pass, testing query passing
      *
-     * @return \Cake\Network\Response
+     * @return \Cake\Http\Response
      */
     public function query_pass()
     {
         $this->response->body(json_encode($this->request->query));
+
+        return $this->response;
+    }
+
+    /**
+     * cookie pass, testing cookie passing
+     *
+     * @return \Cake\Http\Response
+     */
+    public function cookie_pass()
+    {
+        $this->response->body(json_encode($this->request->cookies));
+
         return $this->response;
     }
 
     /**
      * test param passing and parsing.
      *
-     * @return \Cake\Network\Response
+     * @return \Cake\Http\Response
      */
     public function params_pass()
     {
@@ -123,15 +140,16 @@ class RequestActionController extends AppController
             'params' => $this->request->params,
             'query' => $this->request->query,
             'url' => $this->request->url,
-            'contentType' => $this->request->env('CONTENT_TYPE'),
+            'contentType' => $this->request->contentType(),
         ]));
+
         return $this->response;
     }
 
     /**
      * param check method.
      *
-     * @return \Cake\Network\Response
+     * @return \Cake\Http\Response
      */
     public function param_check()
     {
@@ -141,17 +159,31 @@ class RequestActionController extends AppController
             $content = 'return found';
         }
         $this->response->body($content);
+
         return $this->response;
     }
 
     /**
      * Tests session transmission
      *
-     * @return \Cake\Network\Response
+     * @return \Cake\Http\Response
      */
     public function session_test()
     {
         $this->response->body($this->request->session()->read('foo'));
+
+        return $this->response;
+    }
+
+    /**
+     * Tests input data transmission
+     *
+     * @return \Cake\Http\Response
+     */
+    public function input_test()
+    {
+        $this->response->body($this->request->input('json_decode')->hello);
+
         return $this->response;
     }
 
