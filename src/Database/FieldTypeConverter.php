@@ -48,7 +48,7 @@ class FieldTypeConverter
     {
         $this->_driver = $driver;
         $map = $typeMap->toArray();
-        $types = Type::buildAll();
+        $types = DbType::buildAll();
         $result = [];
 
         foreach ($types as $k => $type) {
